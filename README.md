@@ -17,4 +17,4 @@ You can find an example notebook [here](./example.ipynb).
 
 ## Manual
 
-You can find a user manual (documentation) [here](./Softtek%20LLM%20SDK.pdf).
+You can find a user manual (documentation) [here](./Softtek%20LLM%20SDK.pdf). Make sure to download it for a better navigation experience.
