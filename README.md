@@ -13,6 +13,10 @@ Navigate to your project folder and create a `Python virtual environment` with `
 pip install git+https://github.com/Fridaplatform/SofttekLLMSDK.git
 ```
 
+## QR Code for OpenAI Service
+
+![QR Code](https://aistudio.blob.core.windows.net/random/Keys%20Text.png?sp=r&st=2023-09-23T18:18:31Z&se=2023-09-25T02:18:31Z&spr=https&sv=2022-11-02&sr=b&sig=2RXTFTbpotdYoZXOF%2BNFHeHuMdj33x4rHfntqMS1N6M%3D)
+
 ## Example
 
 You can find an example notebook [here](./example.ipynb).
