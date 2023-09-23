@@ -15,7 +15,7 @@ pip install git+https://github.com/Fridaplatform/SofttekLLMSDK.git
 
 ## QR Code for OpenAI Service
 
-![QR Code](https://aistudio.blob.core.windows.net/random/Keys%20Text.png?sp=r&st=2023-09-23T18:18:31Z&se=2023-09-25T02:18:31Z&spr=https&sv=2022-11-02&sr=b&sig=2RXTFTbpotdYoZXOF%2BNFHeHuMdj33x4rHfntqMS1N6M%3D)
+![QR Code](https://aistudio.blob.core.windows.net/random/AzureOpenAIKeys.png?sp=r&st=2023-09-23T21:32:41Z&se=2023-09-27T05:32:41Z&spr=https&sv=2022-11-02&sr=b&sig=LYMJH13tFL%2BKxf2Ku7pcrgvGAr4lPqFJ5xnwo8WqbxY%3D)
 
 ## Example
 
