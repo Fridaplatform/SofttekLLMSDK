@@ -63,8 +63,8 @@ class PineconeVectorStore(VectorStore):
         if proxy is None:
             pinecone.init(api_key=api_key, environment=environment)
         else:
-            penapi_config = OpenApiConfiguration.get_default_copy()
-            penapi_config.proxy = proxy
+            openapi_config = OpenApiConfiguration.get_default_copy()
+            openapi_config.proxy = proxy
             pinecone.init(api_key=api_key, environment=environment, openapi_config=openapi_config)
         self.__index = pinecone.Index(index_name)
 
