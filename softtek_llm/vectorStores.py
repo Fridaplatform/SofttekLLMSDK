@@ -5,7 +5,7 @@ import pinecone
 from typing_extensions import override
 
 from softtek_llm.schemas import Vector
-
+from supabase import Client, create_client
 
 class VectorStore(ABC):
     def __init__(self):
@@ -172,3 +172,87 @@ class PineconeVectorStore(VectorStore):
             )
 
         return vectors
+
+class SupabaseVectorStore(VectorStore):
+    @override
+    def __init__(self, api_key: str, url: str, index_name: str):
+        """
+        Initialize a SupabaseVectorStore object for managing vectors in a Supabase table.
+        """
+        self.__client = create_client(url, api_key)
+        self.__index_name = index_name
+
+    @override
+    def add(self, vectors: List[Vector], **kwargs: Any):
+        """
+        Add vectors to the index.
+        -- Requires a table with columns: id (text), vector (vector(1536)), metadata (json), created_at (timestamp)
+        -- vector is able with the vector extension for postgres in supabase
+
+        -- requires default value of id to gen_random_uuid()
+
+        -- Requires the following procedure (where you only change the value of the table_name variable): 
+        drop function if exists similarity_search_TABLENAME (embedding vector (1536), match_count bigint, tablename text);
+
+        create or replace function similarity_search_TABLENAME(embedding vector(1536), match_count bigint, tablename text)
+        returns table (id bigint, metadata json, value vector(1536), similarity float)
+        language plpgsql
+        as $$
+        begin
+            return query
+            select
+                TABLENAME.id, 
+                (TABLENAME.vector <#> embedding) * -1 as similarity,
+                TABLENAME.vector,
+                TABLENAME.metadata
+            from TABLENAME
+            order by TABLENAME.vector <#> embedding
+            limit match_count;
+        end;
+        $$;
+        """
+        for vector in vectors:
+            # if not vector.id:
+            #     raise ValueError("Vector ID cannot be empty when adding to Supabase.")
+            if not vector.embeddings:
+                raise ValueError("Vector embeddings cannot be empty when adding to Supabase.")
+            vec = {"vector": vector.embeddings, "metadata": vector.metadata}
+            if vector.id is not None and vector.id != "":
+                print ("id is not none")
+                vec["id"] = vector.id
+            print(vec)
+            self.__client.table(self.__index_name).insert(
+                vec
+            ).execute()
+        
+    @override
+    def delete(self, ids: List[str], **kwargs: Any):
+        """
+        Delete vectors from the index.
+        """
+        self.__client.table(self.__index_name).delete().in_("id", ids).execute()
+
+    @override
+    def search(self, vector: Vector | None = None, limit: int = 1, **kwargs: Any) -> List[Vector]:
+        """
+        Search for vectors in the index.
+        """
+        query_response = self.__client.rpc("similarity_search_" + self.__index_name, {"embedding": vector.embeddings, "match_count": limit, "tablename": self.__index_name}).execute()
+        vectors = []
+        print(query_response.data)
+        for match in query_response.data:
+            print(match)
+            metadata = vector.metadata if vector else {}
+            metadata.update(match["metadata"])
+            metadata["score"]= match["similarity"]
+            parsed_vector = [float(i) for i in match["value"][1:-1].split(',')]
+            vectors.append(
+                Vector(
+                    embeddings=parsed_vector,
+                    id=match["id"],
+                    metadata=metadata,
+                )
+            )
+        return vectors
+
+    
