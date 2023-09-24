@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
+from pinecone.core.client.configuration import Configuration as OpenApiConfiguration
 
 import pinecone
 from typing_extensions import override
@@ -47,7 +48,7 @@ class VectorStore(ABC):
 
 class PineconeVectorStore(VectorStore):
     @override
-    def __init__(self, api_key: str, environment: str, index_name: str):
+    def __init__(self, api_key: str, environment: str, index_name: str, proxy: str | None = None):
         """
         Initialize a PineconeVectorStore object for managing vectors in a Pinecone index.
 
@@ -59,7 +60,12 @@ class PineconeVectorStore(VectorStore):
         Note:
             Make sure to use a valid API key and specify the desired environment and index name.
         """
-        pinecone.init(api_key=api_key, environment=environment)
+        if proxy is None:
+            pinecone.init(api_key=api_key, environment=environment)
+        else:
+            penapi_config = OpenApiConfiguration.get_default_copy()
+            penapi_config.proxy = proxy
+            pinecone.init(api_key=api_key, environment=environment, openapi_config=openapi_config)
         self.__index = pinecone.Index(index_name)
 
     @override
