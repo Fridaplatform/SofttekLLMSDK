@@ -26,11 +26,11 @@ class EmbeddingsModel(ABC):
         This is an abstract method for embedding a prompt into a list of floats. This method must be implemented by a subclass.
 
         Args:
-        - prompt (str): The string prompt to embed.
-        - **kwargs (Any): Additional arguments for implementation-defined use.
+        - `prompt` (str): The string prompt to embed.
+        - `**kwargs` (Any): Additional arguments for implementation-defined use.
 
         Returns:
-        - List[float]: The embedding of the prompt as a list of floats.
+        - (List[float]): The embedding of the prompt as a list of floats.
 
         Raises:
         - NotImplementedError: When this abstract method is called without being implemented in a subclass.
@@ -62,14 +62,14 @@ class OpenAIEmbeddings(EmbeddingsModel):
         """Initializes the OpenAIEmbeddings class.
 
         Args:
-            api_key (str): OpenAI API key.
-            model_name (str): OpenAI embeddings model name.
-            api_type (Literal["azure"] | None, optional): Type of API to use. Defaults to None.
-            api_base (str | None, optional): Base URL for Azure API. Defaults to None.
-            api_version (str, optional): API version for Azure API. Defaults to "2023-07-01-preview".
+            `api_key` (str): OpenAI API key.
+            `model_name` (str): OpenAI embeddings model name.
+            `api_type` (Literal["azure"] | None, optional): Type of API to use. Defaults to None.
+            `api_base` (str | None, optional): Base URL for Azure API. Defaults to None.
+            `api_version` (str, optional): API version for Azure API. Defaults to "2023-07-01-preview".
 
         Raises:
-            ValueError: When api_type is not "azure" or None.
+            (ValueError): When api_type is not "azure" or None.
         """
         super().__init__()
         openai.api_key = api_key
@@ -95,10 +95,10 @@ class OpenAIEmbeddings(EmbeddingsModel):
         """Embeds a prompt into a list of floats.
 
         Args:
-            prompt (str): Prompt to embed.
+            `prompt` (str): Prompt to embed.
 
         Returns:
-            List[float]: Embedding of the prompt as a list of floats.
+            (List[float]): Embedding of the prompt as a list of floats.
         """
         response = openai.Embedding.create(
             deployment_id=self.model_name,

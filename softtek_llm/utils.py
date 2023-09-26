@@ -5,8 +5,8 @@ def setup_azure(api_base: str | None, api_version: str):
     """Sets up the Azure API.
 
     Args:
-        api_base (str | None): Base URL for Azure API.
-        api_version (str): API version for Azure API.
+        `api_base` (str | None): Base URL for Azure API.
+        `api_version` (str): API version for Azure API.
 
     Raises:
         ValueError: When api_base is None.

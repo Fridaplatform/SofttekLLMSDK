@@ -26,8 +26,8 @@ class Cache:
         """Initializes the Cache class.
 
         Args:
-            vector_store (VectorStore): The vector store used to store the prompts and responses.
-            embeddings_model (EmbeddingsModel): The embeddings model used to generate embeddings for prompts.
+            `vector_store` (VectorStore): The vector store used to store the prompts and responses.
+            `embeddings_model` (EmbeddingsModel): The embeddings model used to generate embeddings for prompts.
         """
         self.vector_store = vector_store
         self.embeddings_model = embeddings_model
@@ -60,8 +60,8 @@ class Cache:
         """This function adds a prompt and response to the cache. It calculates the embeddings for the prompt and adds it to the vector store.
 
         Args:
-            prompt (str): A string prompt to which the function will respond to.
-            response (Response): A Response object containing the model's reply, timestamp, latency, and model name.
+            `prompt` (str): A string prompt to which the function will respond to.
+            `response` (Response): A Response object containing the model's reply, timestamp, latency, and model name.
         """
         vector = Vector(
             embeddings=self.embeddings_model.embed(prompt, **kwargs),
@@ -84,12 +84,12 @@ class Cache:
         """This function retrieves the best response from a query using the prompt provided by the user. It calculates the time taken to retrieve the data and returns the response.
 
         Args:
-            prompt (str): A string prompt to which the function will respond to.
-            threshold (float, optional): The threshold to use for the search. Defaults to 0.9.
-            additional_kwargs (Dict, optional): Optional dictionary of additional keyword arguments to add to the retrieved response. Defaults to {}.
+            `prompt` (str): A string prompt to which the function will respond to.
+            `threshold` (float, optional): The threshold to use for the search. Defaults to 0.9.
+            `additional_kwargs` (Dict, optional): Optional dictionary of additional keyword arguments to add to the retrieved response. Defaults to {}.
 
         Returns:
-            Tuple[Response | None, float]: A tuple containing the response and the score of the best match.
+            (Tuple[Response | None, float]): A tuple containing the response and the score of the best match.
         """
         start = perf_counter_ns()
         prompt_vector = Vector(

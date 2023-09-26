@@ -25,9 +25,9 @@ class Usage(BaseModel):
     Defines Usage class with the following attributes:
 
     ## Attributes
-    - `prompt_tokens`: an integer representing the number of tokens in the prompt
-    - `completion_tokens`: an integer representing the number of tokens in the completion
-    - `total_tokens`: an integer representing the total number of tokens in the Usage
+    - `prompt_tokens` (int): an integer representing the number of tokens in the prompt
+    - `completion_tokens` (int): an integer representing the number of tokens in the completion
+    - `total_tokens` (int): an integer representing the total number of tokens in the Usage
     """
 
     prompt_tokens: int = 0

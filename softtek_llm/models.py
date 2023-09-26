@@ -33,8 +33,8 @@ class LLMModel(ABC):
         """Initializes the LLMModel class.
 
         Args:
-            model_name (str): Name of the model
-            verbose (bool, optional): Whether to print debug messages. Defaults to False.
+            `model_name` (str): Name of the model
+            `verbose` (bool, optional): Whether to print debug messages. Defaults to False.
         """
         super().__init__()
         self.__model_name = model_name
@@ -58,8 +58,8 @@ class LLMModel(ABC):
         A method to be overridden that calls the model to generate text.
 
         Args:
-            memory (Memory): An instance of the Memory class containing the conversation history.
-            description (str, optional): Description of the model. Defaults to "You are a bot".
+            `memory` (Memory): An instance of the Memory class containing the conversation history.
+            `description` (str, optional): Description of the model. Defaults to "You are a bot".
 
         Returns:
             Response: The generated response.
@@ -68,14 +68,14 @@ class LLMModel(ABC):
         - NotImplementedError: When this abstract method is called without being implemented in a subclass.
         """
         raise NotImplementedError("__call__ method must be overridden")
-
+    
     @abstractmethod
     def parse_filters(self, prompt: str) -> List[Message]:
         """
         Generates a prompt message to check if a given prompt follows a set of filtering rules.
 
         Args:
-            prompt (str): a string representing the prompt that will be checked against rules
+            `prompt` (str): a string representing the prompt that will be checked against rules
 
         Raises:
          - NotImplementedError: When this abstract method is called without being implemented in a subclass.
@@ -116,16 +116,16 @@ class OpenAI(LLMModel):
         """Initializes the OpenAI LLM Model class.
 
         Args:
-            api_key (str): OpenAI API key.
-            model_name (str): Name of the model.
-            api_type (Literal["azure"] | None, optional): Type of API to use. Defaults to None.
-            api_base (str | None, optional): Base URL for Azure API. Defaults to None.
-            api_version (str, optional): API version for Azure API. Defaults to "2023-07-01-preview".
-            max_tokens (int | None, optional): The maximum number of tokens to generate in the chat completion. The total length of input tokens and generated tokens is limited by the model's context length. Defaults to None.
-            temperature (float, optional): What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. Defaults to 1.
-            presence_penalty (float, optional): Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics. Defaults to 0.
-            frequency_penalty (float, optional): Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim. Defaults to 0.
-            verbose (bool, optional): Whether to print debug messages. Defaults to False.
+            `api_key` (str): OpenAI API key.
+            `model_name` (str): Name of the model. If you're using an OpenAI resource/key, use the correspondent model name (e.g. gpt-35-turbo-16k), if you're using Azure OpenAI or other hosting service, use your deployment name.
+            `api_type` (Literal["azure"] | None, optional): Type of API to use. Defaults to None.
+            `api_base` (str | None, optional): Base URL for Azure API. Defaults to None.
+            `api_version` (str, optional): API version for Azure API. Defaults to "2023-07-01-preview".
+            `max_tokens` (int | None, optional): The maximum number of tokens to generate in the chat completion. The total length of input tokens and generated tokens is limited by the model's context length. Defaults to None.
+            `temperature` (float, optional): What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. Defaults to 1.
+            `presence_penalty` (float, optional): Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics. Defaults to 0.
+            `frequency_penalty` (float, optional): Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim. Defaults to 0.
+            `verbose` (bool, optional): Whether to print debug messages. Defaults to False.
 
         Raises:
             ValueError: When api_type is not "azure" or None.
@@ -222,11 +222,11 @@ class OpenAI(LLMModel):
         It then constructs a Response object containing the model's reply.
 
         Args:
-            memory (Memory): An instance of the Memory class containing the conversation history.
-            description (str, optional): Description of the model. Defaults to "You are a bot.".
+            `memory` (Memory): An instance of the Memory class containing the conversation history.
+            `description` (str, optional): Description of the model. Defaults to "You are a bot.".
 
         Returns:
-            Response: A Response object containing the model's reply, timestamp, latency, and model name.
+            `resp` (Response): A Response object containing the model's reply, timestamp, latency, and model name.
         """
 
         start = perf_counter_ns()
@@ -278,9 +278,9 @@ class OpenAI(LLMModel):
         Generates a prompt message to check if a given prompt follows a set of filtering rules.
 
         Args:
-            prompt (str): a string representing the prompt that will be checked against rules.
-            context (List[Message]): A list containing the last 3 messages from the chat.
-            filters (List[Filter]): List of filters used by the chatbot.
+            `prompt` (str): a string representing the prompt that will be checked against rules.
+            `context` (List[Message]): A list containing the last 3 messages from the chat.
+            `filters` (List[Filter]): List of filters used by the chatbot.
 
         Returns:
             (List[Message]): a list of messages to be used by the chatbot to check if the prompt respects the rules

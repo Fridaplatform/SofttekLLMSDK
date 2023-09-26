@@ -19,8 +19,8 @@ class VectorStore(ABC):
         Abstract method for adding the given vectors to the vectorstore.
 
         Args:
-            vectors: A List of Vector instances to add.
-            **kwargs: Additional arguments.
+            `vectors` (List[Vector]): A List of Vector instances to add.
+            `**kwargs` (Any): Additional arguments.
 
         Raises:
             NotImplementedError: The method must be implemented by a subclass.
@@ -30,11 +30,11 @@ class VectorStore(ABC):
     @abstractmethod
     def delete(self, ids: List[str], **kwargs: Any):
         """
-        Abstract method for deleting  vectors from the VectorStore given a list of vector IDs
+        Abstract method for deleting vectors from the VectorStore given a list of vector IDs
 
         Args:
-            ids: A List of Vector IDs to delete.
-            **kwargs: Additional arguments.
+            `ids` (List[str]): A List of Vector IDs to delete.
+            `**kwargs` (Any): Additional arguments.
 
         Raises:
             NotImplementedError: The method must be implemented by a subclass.
@@ -43,6 +43,16 @@ class VectorStore(ABC):
 
     @abstractmethod
     def search(self, vector: Vector | None = None, **kwargs: Any) -> List[Vector]:
+        """
+        Abstract method for searching vectors that match the specified criteria.
+
+        Args:
+            `vector` (Vector, optional): The vector to use as a reference for the search. Defaults to None.
+            `**kwargs` (Any): Additional keyword arguments to customize the search criteria.
+
+        Raises:
+            NotImplementedError: If the search method is not overridden.
+        """
         raise NotImplementedError("search method must be overridden")
 
 
@@ -53,9 +63,10 @@ class PineconeVectorStore(VectorStore):
         Initialize a PineconeVectorStore object for managing vectors in a Pinecone index.
 
         Args:
-            api_key (str): The API key for authentication with the Pinecone service.
-            environment (str): The Pinecone environment to use (e.g., "production" or "sandbox").
-            index_name (str): The name of the index where vectors will be stored and retrieved.
+            `api_key` (str): The API key for authentication with the Pinecone service.
+            `environment` (str): The Pinecone environment to use (e.g., "production" or "sandbox").
+            `index_name` (str): The name of the index where vectors will be stored and retrieved.
+            `proxy` (str | None, optional): The proxy URL to use for requests. Defaults to None.
 
         Note:
             Make sure to use a valid API key and specify the desired environment and index name.
@@ -80,10 +91,11 @@ class PineconeVectorStore(VectorStore):
         """Add vectors to the index.
 
         Args:
-            vectors (List[Vector]): A list of Vector objects to add to the index. Note that each vector must have a unique ID.
-            namespace (str | None, optional): The namespace to write to. If not specified, the default namespace is used. Defaults to None.
-            batch_size (int | None, optional): The number of vectors to upsert in each batch. If not specified, all vectors will be upserted in a single batch. Defaults to None.
-            show_progress (bool, optional): Whether to show a progress bar using tqdm. Applied only if batch_size is provided. Defaults to True.
+            `vectors` (List[Vector]): A list of Vector objects to add to the index. Note that each vector must have a unique ID.
+            `namespace` (str | None, optional): The namespace to write to. If not specified, the default namespace is used. Defaults to None.
+            `batch_size` (int | None, optional): The number of vectors to upsert in each batch. If not specified, all vectors will be upserted in a single batch. Defaults to None.
+            `show_progress` (bool, optional): Whether to show a progress bar using tqdm. Applied only if batch_size is provided. Defaults to True.
+            `**kwargs` (Any): Additional arguments.
 
         Raises:
             ValueError: If any of the vectors do not have a unique ID.
@@ -120,10 +132,11 @@ class PineconeVectorStore(VectorStore):
         """Delete vectors from the index.
 
         Args:
-            ids (List[str] | None, optional): A list of vector IDs to delete. Defaults to None.
-            delete_all (bool | None, optional): This indicates that all vectors in the index namespace should be deleted. Defaults to None.
-            namespace (str | None, optional): The namespace to delete vectors from. If not specified, the default namespace is used. Defaults to None.
-            filter (Dict | None, optional): If specified, the metadata filter here will be used to select the vectors to delete. This is mutually exclusive with specifying ids to delete in the `ids` param or using `delete_all=True`. Defaults to None.
+            `ids` (List[str] | None, optional): A list of vector IDs to delete. Defaults to None.
+            `delete_all` (bool | None, optional): This indicates that all vectors in the index namespace should be deleted. Defaults to None.
+            `namespace` (str | None, optional): The namespace to delete vectors from. If not specified, the default namespace is used. Defaults to None.
+            `filter` (Dict | None, optional): If specified, the metadata filter here will be used to select the vectors to delete. This is mutually exclusive with specifying ids to delete in the `ids` param or using `delete_all=True`. Defaults to None.
+            `**kwargs` (Any): Additional arguments.
         """
         self.__index.delete(
             ids=ids, delete_all=delete_all, namespace=namespace, filter=filter, **kwargs
@@ -142,15 +155,16 @@ class PineconeVectorStore(VectorStore):
         """Search for vectors in the index.
 
         Args:
-            vector (Vector | None, optional): The query vector. Each call can contain only one of the parameters `id` or `vector`. Defaults to None.
-            id (str | None, optional): The unique ID of the vector to be used as a query vector. Each call can contain only one of the parameters `id` or `vector`. Defaults to None.
-            top_k (int, optional): The number of results to return for each query. Defaults to 1.
-            namespace (str | None, optional): The namespace to fetch vectors from. If not specified, the default namespace is used. Defaults to None.
-            filter (Dict | None, optional): The filter to apply. You can use vector metadata to limit your search. Defaults to None.
-            include_metadata (bool, optional): Indicates whether metadata is included in the response as well as the ids. If omitted the server will use the default value of False. Defaults to None.
+            `vector` (Vector | None, optional): The query vector. Each call can contain only one of the parameters `id` or `vector`. Defaults to None.
+            `id` (str | None, optional): The unique ID of the vector to be used as a query vector. Each call can contain only one of the parameters `id` or `vector`. Defaults to None.
+            `top_k` (int, optional): The number of results to return for each query. Defaults to 1.
+            `namespace` (str | None, optional): The namespace to fetch vectors from. If not specified, the default namespace is used. Defaults to None.
+            `filter` (Dict | None, optional): The filter to apply. You can use vector metadata to limit your search. Defaults to None.
+            `include_metadata` (bool, optional): Indicates whether metadata is included in the response as well as the ids. If omitted the server will use the default value of False. Defaults to None.
+            `**kwargs` (Any): Additional arguments.
 
         Returns:
-            List[Vector]: A list of Vector objects containing the search results.
+            `vectors` (List[Vector]): A list of Vector objects containing the search results.
         """
         # TODO: Default queries and sparse_vector parameters. Is QueryVector class iterable?
         query_response = self.__index.query(

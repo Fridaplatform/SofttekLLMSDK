@@ -26,10 +26,10 @@ class Memory:
         """Initializes the Memory class from a list of messages.
 
         Args:
-            messages (List[Message]): The list of messages to initialize the memory with.
+            `messages` (List[Message]): The list of messages to initialize the memory with.
 
         Returns:
-            Memory: The initialized memory.
+            (Memory): The initialized memory.
         """
         memory = cls()
         for message in messages:
@@ -42,8 +42,8 @@ class Memory:
         """Adds a message to the memory.
 
         Args:
-            role (Literal["system", "user", "assistant", "function"]): The role of the message.
-            content (str): The content of the message.
+            `role` (Literal["system", "user", "assistant", "function"]): The role of the message.
+            `content` (str): The content of the message.
         """
         self.__messages.append(Message(role=role, content=content))
 
@@ -51,7 +51,7 @@ class Memory:
         """Deletes a message from the memory.
 
         Args:
-            index (int): The index of the message to delete.
+            `index` (int): The index of the message to delete.
         """
         self.__messages.pop(index)
 
@@ -59,10 +59,10 @@ class Memory:
         """Returns a message from the memory.
 
         Args:
-            index (int): The index of the message to return.
+            `index` (int): The index of the message to return.
 
         Returns:
-            Message: The message at the given index.
+            (Message): The message at the given index.
         """
         return self.__messages[index]
 
@@ -70,7 +70,7 @@ class Memory:
         """Returns all the messages from the memory. It is a copy of the original list of messages. Appending to this list will not affect the original list.
 
         Returns:
-            List[Message]: A copy of the list of messages.
+            (List[Message]): A copy of the list of messages.
         """
         return self.__messages.copy()
 
@@ -100,7 +100,7 @@ class WindowMemory(Memory):
         """Initializes the WindowMemory class.
 
         Args:
-            window_size (int): The maximum number of messages to store in the memory.
+            `window_size` (int): The maximum number of messages to store in the memory.
         """
         super().__init__()
         self.window_size = window_size
@@ -125,8 +125,8 @@ class WindowMemory(Memory):
         """Adds a message to the memory.
 
         Args:
-            role (Literal["system", "user", "assistant", "function"]): The role of the message.
-            content (str): The content of the message.
+            `role` (Literal["system", "user", "assistant", "function"]): The role of the message.
+            `content` (str): The content of the message.
         """
         super().add_message(role, content)
         if len(self.get_messages()) > self.window_size:
