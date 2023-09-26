@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
 from time import perf_counter_ns
-from typing import Any, Literal, List
+from typing import Any, List, Literal
 
 import openai
+from openai.error import InvalidRequestError
 from typing_extensions import override
 
+from softtek_llm.exceptions import TokensExceeded
 from softtek_llm.memory import Memory
-from softtek_llm.schemas import Message, OpenAIChatResponse, Response, Filter
+from softtek_llm.schemas import Filter, Message, OpenAIChatResponse, Response
 from softtek_llm.utils import setup_azure
 
 
@@ -66,8 +68,7 @@ class LLMModel(ABC):
         - NotImplementedError: When this abstract method is called without being implemented in a subclass.
         """
         raise NotImplementedError("__call__ method must be overridden")
-    
-    # TODO now: Change name?
+
     @abstractmethod
     def parse_filters(self, prompt: str) -> List[Message]:
         """
@@ -235,16 +236,24 @@ class OpenAI(LLMModel):
         if self.verbose:
             print(f"Memory: {messages}")
 
-        answer = OpenAIChatResponse(
-            **openai.ChatCompletion.create(
-                deployment_id=self.model_name,
-                messages=messages,
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-                presence_penalty=self.presence_penalty,
-                frequency_penalty=self.frequency_penalty,
+        try:
+            answer = OpenAIChatResponse(
+                **openai.ChatCompletion.create(
+                    deployment_id=self.model_name,
+                    messages=messages,
+                    temperature=self.temperature,
+                    max_tokens=self.max_tokens,
+                    presence_penalty=self.presence_penalty,
+                    frequency_penalty=self.frequency_penalty,
+                )
             )
-        )
+        except InvalidRequestError as e:
+            if "maximum context length" in str(e).lower():
+                raise TokensExceeded(
+                    f"Tokens exceeded for model '{self.model_name}'. If you're using the max_tokens parameter, try increasing it. Otherwise, you may consider:\n- Upgrading to a different model\n- Reducing the messages stored in memory (for example, by using a WindowMemory)\n- Applying some strategy for data reduction (for example, text summarization)"
+                ) from e
+            else:
+                raise e
 
         resp = Response(
             message=Message(
@@ -262,7 +271,9 @@ class OpenAI(LLMModel):
         return resp
 
     @override
-    def parse_filters(self, prompt: str, context: List[Message], filters: List[Filter]) -> List[Message]:
+    def parse_filters(
+        self, prompt: str, context: List[Message], filters: List[Filter]
+    ) -> List[Message]:
         """
         Generates a prompt message to check if a given prompt follows a set of filtering rules.
 
@@ -278,9 +289,7 @@ class OpenAI(LLMModel):
             [f"\t- {message.role}: {message.content}" for message in context]
         )
 
-        rules = "\n".join(
-            [f"\t- {filter.type}: {filter.case}" for filter in filters]
-        )
+        rules = "\n".join([f"\t- {filter.type}: {filter.case}" for filter in filters])
 
         prompt = f'Considering this context:\n{context}\n\nPlease review the prompt below and answer with "yes" if it adheres to the rules or "no" if it violates any of the rules.\nRules:\n{rules}\n\nPrompt:\n{prompt}'
 
