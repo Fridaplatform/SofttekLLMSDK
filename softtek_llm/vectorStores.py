@@ -187,29 +187,9 @@ class SupabaseVectorStore(VectorStore):
         """
         Add vectors to the index.
         -- Requires a table with columns: id (text), vector (vector(1536)), metadata (json), created_at (timestamp)
-        -- vector is able with the vector extension for postgres in supabase
-
+        -- vector type is enabled with the vector extension for postgres in supabase
         -- requires default value of id to gen_random_uuid()
 
-        -- Requires the following procedure (where you only change the value of the table_name variable): 
-        drop function if exists similarity_search_TABLENAME (embedding vector (1536), match_count bigint, tablename text);
-
-        create or replace function similarity_search_TABLENAME(embedding vector(1536), match_count bigint, tablename text)
-        returns table (id text, metadata json, value vector(1536), similarity float)
-        language plpgsql
-        as $$
-        begin
-            return query
-            select
-                TABLENAME.id, 
-                (TABLENAME.vector <#> embedding) * -1 as similarity,
-                TABLENAME.vector,
-                TABLENAME.metadata
-            from TABLENAME
-            order by TABLENAME.vector <#> embedding
-            limit match_count;
-        end;
-        $$;
         """
         for vector in vectors:
             # if not vector.id:
@@ -226,16 +206,50 @@ class SupabaseVectorStore(VectorStore):
             ).execute()
         
     @override
-    def delete(self, ids: List[str], **kwargs: Any):
-        """
-        Delete vectors from the index.
+    def delete(self,
+                ids: List[str] | None = None,
+                **kwargs: Any):
+        """Delete vectors from the index.
+
+        Args:
+            ids (List[str] | None, optional): A list of vector IDs to delete. Defaults to None.
         """
         self.__client.table(self.__index_name).delete().in_("id", ids).execute()
 
     @override
-    def search(self, vector: Vector | None = None, limit: int = 1, **kwargs: Any) -> List[Vector]:
+    def search(self, 
+               vector: Vector | None = None, 
+               limit: int = 1, 
+               **kwargs: Any) -> List[Vector]:
         """
         Search for vectors in the index.
+
+        Args:
+            vector (Vector | None, optional): The query vector. Each call can contain only one of the parameters `id` or `vector`. Defaults to None.
+            limit (int, optional): the number of vectors to retrieve
+
+        Returns:
+            List[Vector]: A list of Vector objects containing the search results.
+        
+        -- Requires the following procedure (where you only change the value of the TABLENAME variable): 
+        drop function if exists similarity_search_TABLENAME (embedding vector (1536), match_count bigint);
+
+        create or replace function similarity_search_TABLENAME(embedding vector(1536), match_count bigint)
+        returns table (id text,similarity float, value vector(1536), ,metadata json)
+        language plpgsql
+        as $$
+        begin
+            return query
+            select
+                TABLENAME.id, 
+                (TABLENAME.vector <#> embedding) * -1 as similarity,
+                TABLENAME.vector,
+                TABLENAME.metadata
+            from TABLENAME
+            order by TABLENAME.vector <#> embedding
+            limit match_count;
+        end;
+        $$;
         """
         query_response = self.__client.rpc("similarity_search_" + self.__index_name, {"embedding": vector.embeddings, "match_count": limit}).execute()
         vectors = []
