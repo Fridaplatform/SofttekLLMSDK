@@ -195,7 +195,7 @@ class SupabaseVectorStore(VectorStore):
         drop function if exists similarity_search_TABLENAME (embedding vector (1536), match_count bigint, tablename text);
 
         create or replace function similarity_search_TABLENAME(embedding vector(1536), match_count bigint, tablename text)
-        returns table (id bigint, metadata json, value vector(1536), similarity float)
+        returns table (id text, metadata json, value vector(1536), similarity float)
         language plpgsql
         as $$
         begin
@@ -237,7 +237,7 @@ class SupabaseVectorStore(VectorStore):
         """
         Search for vectors in the index.
         """
-        query_response = self.__client.rpc("similarity_search_" + self.__index_name, {"embedding": vector.embeddings, "match_count": limit, "tablename": self.__index_name}).execute()
+        query_response = self.__client.rpc("similarity_search_" + self.__index_name, {"embedding": vector.embeddings, "match_count": limit}).execute()
         vectors = []
         print(query_response.data)
         for match in query_response.data:
