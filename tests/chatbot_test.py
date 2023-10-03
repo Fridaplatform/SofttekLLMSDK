@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from softtek_llm.chatbot import Chatbot, Filter, InvalidPrompt
+from softtek_llm.chatbots.chatbot import Chatbot, Filter, InvalidPrompt
 from softtek_llm.models import OpenAI
 
 
