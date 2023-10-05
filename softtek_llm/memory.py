@@ -1,7 +1,8 @@
-from typing import List, Literal
+from typing import Dict, List, Literal
+
+from typing_extensions import override
 
 from softtek_llm.schemas import Message
-from typing_extensions import override
 
 
 class Memory:
@@ -15,6 +16,7 @@ class Memory:
     - `get_message`: Returns a message from the memory.
     - `get_messages`: Returns all the messages from the memory. It is a copy of the original list of messages. Appending to this list will not affect the original list.
     - `clear_messages`: Clears all messages from the memory.
+    - `messages_to_dict`: Returns all the messages from the memory in a list of dictionaries.
     """
 
     def __init__(self):
@@ -77,6 +79,14 @@ class Memory:
     def clear_messages(self):
         """Clears all messages from the memory."""
         self.__messages.clear()
+
+    def messages_to_dict(self) -> List[Dict]:
+        """Returns all the messages from the memory in a list of dictionaries.
+
+        Returns:
+            (List[Dict]): The list of messages in dictionary format.
+        """
+        return [message.model_dump() for message in self.__messages]
 
 
 class WindowMemory(Memory):
