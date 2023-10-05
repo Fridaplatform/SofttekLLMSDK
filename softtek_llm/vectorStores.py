@@ -8,6 +8,7 @@ from typing_extensions import override
 from softtek_llm.schemas import Vector
 from supabase import Client, create_client
 
+
 class VectorStore(ABC):
     def __init__(self):
         """Initializes the VectorStoreModel class."""
@@ -42,12 +43,15 @@ class VectorStore(ABC):
         raise NotImplementedError("delete method must be overridden")
 
     @abstractmethod
-    def search(self, vector: Vector | None = None, **kwargs: Any) -> List[Vector]:
+    def search(
+        self, vector: Vector | None = None, top_k: int = 1, **kwargs: Any
+    ) -> List[Vector]:
         """
         Abstract method for searching vectors that match the specified criteria.
 
         Args:
             `vector` (Vector, optional): The vector to use as a reference for the search. Defaults to None.
+            `top_k` (int, optional): The number of results to return for each query. Defaults to 1.
             `**kwargs` (Any): Additional keyword arguments to customize the search criteria.
 
         Raises:
@@ -58,7 +62,9 @@ class VectorStore(ABC):
 
 class PineconeVectorStore(VectorStore):
     @override
-    def __init__(self, api_key: str, environment: str, index_name: str, proxy: str | None = None):
+    def __init__(
+        self, api_key: str, environment: str, index_name: str, proxy: str | None = None
+    ):
         """
         Initialize a PineconeVectorStore object for managing vectors in a Pinecone index.
 
@@ -76,7 +82,9 @@ class PineconeVectorStore(VectorStore):
         else:
             openapi_config = OpenApiConfiguration.get_default_copy()
             openapi_config.proxy = proxy
-            pinecone.init(api_key=api_key, environment=environment, openapi_config=openapi_config)
+            pinecone.init(
+                api_key=api_key, environment=environment, openapi_config=openapi_config
+            )
         self.__index = pinecone.Index(index_name)
 
     @override
@@ -168,15 +176,15 @@ class PineconeVectorStore(VectorStore):
         """
         # TODO: Default queries and sparse_vector parameters. Is QueryVector class iterable?
         query_response = self.__index.query(
-                vector=vector.embeddings if vector else None,
-                id=id,
-                top_k=top_k,
-                namespace=namespace,
-                filter=filter,
-                include_values=True,
-                include_metadata=True,
-                **kwargs,
-            )
+            vector=vector.embeddings if vector else None,
+            id=id,
+            top_k=top_k,
+            namespace=namespace,
+            filter=filter,
+            include_values=True,
+            include_metadata=True,
+            **kwargs,
+        )
 
         vectors = []
         for match in query_response.matches:
@@ -192,6 +200,7 @@ class PineconeVectorStore(VectorStore):
             )
 
         return vectors
+
 
 class SupabaseVectorStore(VectorStore):
     @override
@@ -215,20 +224,18 @@ class SupabaseVectorStore(VectorStore):
             # if not vector.id:
             #     raise ValueError("Vector ID cannot be empty when adding to Supabase.")
             if not vector.embeddings:
-                raise ValueError("Vector embeddings cannot be empty when adding to Supabase.")
+                raise ValueError(
+                    "Vector embeddings cannot be empty when adding to Supabase."
+                )
             vec = {"vector": vector.embeddings, "metadata": vector.metadata}
             if vector.id is not None and vector.id != "":
-                print ("id is not none")
+                print("id is not none")
                 vec["id"] = vector.id
             print(vec)
-            self.__client.table(self.__index_name).insert(
-                vec
-            ).execute()
-        
+            self.__client.table(self.__index_name).insert(vec).execute()
+
     @override
-    def delete(self,
-                ids: List[str] | None = None,
-                **kwargs: Any):
+    def delete(self, ids: List[str] | None = None, **kwargs: Any):
         """Delete vectors from the index.
 
         Args:
@@ -237,10 +244,9 @@ class SupabaseVectorStore(VectorStore):
         self.__client.table(self.__index_name).delete().in_("id", ids).execute()
 
     @override
-    def search(self, 
-               vector: Vector | None = None, 
-               limit: int = 1, 
-               **kwargs: Any) -> List[Vector]:
+    def search(
+        self, vector: Vector | None = None, limit: int = 1, **kwargs: Any
+    ) -> List[Vector]:
         """
         Search for vectors in the index.
 
@@ -250,8 +256,8 @@ class SupabaseVectorStore(VectorStore):
 
         Returns:
             List[Vector]: A list of Vector objects containing the search results.
-        
-        -- Requires the following procedure (where you only change the value of the TABLENAME variable): 
+
+        -- Requires the following procedure (where you only change the value of the TABLENAME variable):
         drop function if exists similarity_search_TABLENAME (embedding vector (1536), match_count bigint);
 
         create or replace function similarity_search_TABLENAME(embedding vector(1536), match_count bigint)
@@ -261,7 +267,7 @@ class SupabaseVectorStore(VectorStore):
         begin
             return query
             select
-                TABLENAME.id, 
+                TABLENAME.id,
                 (TABLENAME.vector <#> embedding) * -1 as similarity,
                 TABLENAME.vector,
                 TABLENAME.metadata
@@ -271,15 +277,18 @@ class SupabaseVectorStore(VectorStore):
         end;
         $$;
         """
-        query_response = self.__client.rpc("similarity_search_" + self.__index_name, {"embedding": vector.embeddings, "match_count": limit}).execute()
+        query_response = self.__client.rpc(
+            "similarity_search_" + self.__index_name,
+            {"embedding": vector.embeddings, "match_count": limit},
+        ).execute()
         vectors = []
         print(query_response.data)
         for match in query_response.data:
             print(match)
             metadata = vector.metadata if vector else {}
             metadata.update(match["metadata"])
-            metadata["score"]= match["similarity"]
-            parsed_vector = [float(i) for i in match["value"][1:-1].split(',')]
+            metadata["score"] = match["similarity"]
+            parsed_vector = [float(i) for i in match["value"][1:-1].split(",")]
             vectors.append(
                 Vector(
                     embeddings=parsed_vector,
@@ -288,5 +297,3 @@ class SupabaseVectorStore(VectorStore):
                 )
             )
         return vectors
-
-    
