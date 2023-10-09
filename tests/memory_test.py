@@ -171,6 +171,24 @@ class TestWindowMemory(unittest.TestCase):
         memory.clear_messages()
         self.assertEqual(memory.get_messages(), [])
 
+    def test_from_messages(self):
+        memory = WindowMemory.from_messages(
+            [
+                Message(role="system", content="Hello!"),
+                Message(role="user", content="Hi."),
+                Message(role="assistant", content="How can I help you?"),
+            ],
+            window_size=10,
+        )
+        self.assertEqual(
+            memory.get_messages(),
+            [
+                Message(role="system", content="Hello!"),
+                Message(role="user", content="Hi."),
+                Message(role="assistant", content="How can I help you?"),
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

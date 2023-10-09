@@ -128,6 +128,23 @@ class WindowMemory(Memory):
             raise ValueError("window_size must be greater than 0.")
         self.__window_size = window_size
 
+    @classmethod
+    @override
+    def from_messages(cls, messages: List[Message], window_size: int):
+        """Initializes the Memory class from a list of messages.
+
+        Args:
+            `messages` (List[Message]): The list of messages to initialize the memory with.
+            `window_size` (int): The maximum number of messages to store in the memory.
+
+        Returns:
+            (Memory): The initialized memory.
+        """
+        memory = cls(window_size)
+        for message in messages:
+            memory.add_message(message.role, message.content)
+        return memory
+
     @override
     def add_message(
         self, role: Literal["system", "user", "assistant", "function"], content: str
