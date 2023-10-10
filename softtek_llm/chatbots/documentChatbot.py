@@ -49,7 +49,7 @@ class DocumentChatBot(Chatbot):
         model: LLMModel,
         knowledge_base: VectorStore,
         embeddings_model: EmbeddingsModel,
-        description: str = "You are a helpful research assistant. You have acess to documents and always respond using the most relevant information.",
+        description: str = "You are a helpful research assistant. You have access to documents and always respond using the most relevant information.",
         memory: Memory = WindowMemory(window_size=10),
         non_valid_response: str | None = None,
         filters: List[Filter] | None = None,
