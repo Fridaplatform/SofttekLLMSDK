@@ -5,7 +5,12 @@ from datetime import datetime
 from time import perf_counter_ns
 from typing import Dict, List, Literal, Tuple
 
-from langchain.document_loaders import Docx2txtLoader, PyPDFLoader, TextLoader
+from langchain.document_loaders import (
+    CSVLoader,
+    Docx2txtLoader,
+    PyPDFLoader,
+    TextLoader,
+)
 from langchain.document_loaders.base import BaseLoader
 from typing_extensions import override
 
@@ -41,6 +46,7 @@ class DocumentChatBot(Chatbot):
         "docx": Docx2txtLoader,
         "txt": TextLoader,
         "doc": Docx2txtLoader,
+        "csv": CSVLoader,
     }
 
     @override
@@ -105,8 +111,11 @@ class DocumentChatBot(Chatbot):
 
     @knowledge_base_namespace.setter
     def knowledge_base_namespace(self, knowledge_base_namespace: str):
-        if not isinstance(knowledge_base_namespace, str):
-            raise TypeError("knowledge_base_namespace must be a string.")
+        if (
+            not isinstance(knowledge_base_namespace, str)
+            and knowledge_base_namespace is not None
+        ):
+            raise TypeError("knowledge_base_namespace must be a string or None")
         self.__knowledge_base_namespace = knowledge_base_namespace
 
     def __get_document_name_and_file_path(
@@ -202,14 +211,14 @@ class DocumentChatBot(Chatbot):
     def add_document(
         self,
         file: str | bytes,
-        file_type: Literal["pdf", "doc", "docx", "txt"],
+        file_type: Literal["pdf", "doc", "docx", "txt", "csv"],
         document_name: str | None = None,
     ):
         """Adds a document to the knowledge base.
 
         Args:
             `file` (str | bytes): Either the path to the file or the bytes of the file.
-            `file_type` (Literal["pdf", "doc", "docx", "txt"]): The type of the file.
+            `file_type` (Literal["pdf", "doc", "docx", "txt", "csv"]): The type of the file.
             `document_name` (str | None, optional): The name of the document. Defaults to None. If None, the name of the file is used.
         """
         document_name, file_path = self.__get_document_name_and_file_path(
@@ -221,14 +230,14 @@ class DocumentChatBot(Chatbot):
     def delete_document(
         self,
         file: str | bytes,
-        file_type: Literal["pdf", "doc", "docx", "txt"],
+        file_type: Literal["pdf", "doc", "docx", "txt", "csv"],
         document_name: str | None = None,
     ):
         """Deletes a document from the knowledge base.
 
         Args:
             `file` (str | bytes): Either the path to the file or the bytes of the file.
-            `file_type` (Literal["pdf", "doc", "docx", "txt"]): The type of the file.
+            `file_type` (Literal["pdf", "doc", "docx", "txt", "csv"]): The type of the file.
             `document_name` (str | None, optional): The name of the document. Defaults to None. If None, the name of the file is used.
         """
         document_name, file_path = self.__get_document_name_and_file_path(
