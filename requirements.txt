@@ -30,6 +30,7 @@ h11==0.14.0
 httpcore==0.17.3
 httpx==0.24.1
 idna==3.4
+ipykernel==6.25.2
 ipython==8.15.0
 isodate==0.6.1
 jedi==0.19.0
@@ -87,7 +88,7 @@ tqdm==4.66.1
 traitlets==5.10.0
 types-pytz==2023.3.0.1
 typing-inspect==0.9.0
-typing_extensions==4.7.1
+typing_extensions==4.8.0
 tzdata==2023.3
 urllib3==2.0.4
 wcwidth==0.2.6
