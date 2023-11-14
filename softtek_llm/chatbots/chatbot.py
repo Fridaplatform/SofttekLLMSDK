@@ -142,7 +142,7 @@ class Chatbot:
         """Whether to print additional information."""
         return self.__verbose
 
-    def __random_boolean(self) -> bool:
+    def _random_boolean(self) -> bool:
         """Generates a random boolean value based on the given probability.
 
         Returns:
@@ -150,7 +150,7 @@ class Chatbot:
         """
         return random.random() <= self.cache_probability
 
-    def __revise(self, prompt: str) -> bool:
+    def _revise(self, prompt: str) -> bool:
         """
         This method is used to revise a given prompt passed as input parameter and returns a Boolean value indicating whether the revision occurred successfully or not.
 
@@ -172,7 +172,7 @@ class Chatbot:
 
         return "yes" in reviser.message.content.lower()
 
-    def __call_model(self) -> Response:
+    def _call_model(self) -> Response:
         """
         This method is used to call the model and returns a Response object.
 
@@ -200,7 +200,7 @@ class Chatbot:
         """
         start = perf_counter_ns()
         if self.filters:
-            if not self.__revise(prompt):
+            if not self._revise(prompt):
                 if self.non_valid_response:
                     return Response(
                         message=Message(role="system", content=self.non_valid_response),
@@ -215,9 +215,9 @@ class Chatbot:
 
         self.memory.add_message(role="user", content=prompt)
         if not self.cache:
-            last_message = self.__call_model()
+            last_message = self._call_model()
         else:
-            if self.__random_boolean():
+            if self._random_boolean():
                 cached_response, cache_score = self.cache.retrieve(
                     prompt=prompt, **cache_kwargs
                 )
@@ -230,9 +230,9 @@ class Chatbot:
                     )
                     last_message = cached_response
                 else:
-                    last_message = self.__call_model()
+                    last_message = self._call_model()
                     self.cache.add(prompt=prompt, response=last_message, **cache_kwargs)
             else:
-                last_message = self.__call_model()
+                last_message = self._call_model()
 
         return last_message

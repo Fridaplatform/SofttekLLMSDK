@@ -17,7 +17,7 @@ from typing_extensions import override
 from softtek_llm.cache import Cache
 from softtek_llm.chatbots.chatbot import Chatbot
 from softtek_llm.embeddings import EmbeddingsModel
-from softtek_llm.exceptions import InvalidPrompt
+from softtek_llm.exceptions import InvalidPrompt, KnowledgeBaseEmpty
 from softtek_llm.memory import Memory, WindowMemory
 from softtek_llm.models import LLMModel
 from softtek_llm.schemas import Filter, Message, Response, Vector
@@ -282,6 +282,9 @@ class DocumentChatBot(Chatbot):
             for source in all_sources:
                 if source not in sources:
                     sources.append(source)
+        else:
+            raise KnowledgeBaseEmpty("The knowledge base is empty")
+        
         context = "\n".join([vector.metadata["text"] for vector in similar_vectors])
 
         # * Prepare new memory
@@ -331,7 +334,7 @@ class DocumentChatBot(Chatbot):
         """
         start = perf_counter_ns()
         if self.filters:
-            if not self.__revise(prompt):
+            if not self._revise(prompt):
                 if self.non_valid_response:
                     return Response(
                         message=Message(role="system", content=self.non_valid_response),
@@ -348,7 +351,7 @@ class DocumentChatBot(Chatbot):
         if not self.cache:
             last_message = self.__call_model(include_context, top_documents)
         else:
-            if self.__random_boolean():
+            if self._random_boolean():
                 cached_response, cache_score = self.cache.retrieve(
                     prompt=prompt, **cache_kwargs
                 )

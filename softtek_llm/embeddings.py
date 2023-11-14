@@ -4,6 +4,8 @@ from typing import Any, List, Literal
 import openai
 from typing_extensions import override
 
+import requests
+
 from softtek_llm.utils import setup_azure
 
 
@@ -105,3 +107,25 @@ class OpenAIEmbeddings(EmbeddingsModel):
             input=prompt,
         )
         return response["data"][0]["embedding"]
+
+
+class SofttekOpenAIEmbeddings(EmbeddingsModel):
+    @override
+    def __init__(self, model_name: str, api_key: str):
+        super().__init__()
+        self.__model_name = model_name
+        self.__api_key = api_key
+
+    @property
+    def model_name(self) -> str:
+        """Embeddings model name."""
+        return self.__model_name
+
+    @override
+    def embed(self, prompt: str) -> List[float]:
+        response = requests.post(
+            "https://llm-api-stk.azurewebsites.net/embeddings",
+            headers={"api-key": self.__api_key},
+            json={"input": prompt, "model": self.model_name},
+        )
+        return response.json()["data"][0]["embedding"]
