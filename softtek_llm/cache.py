@@ -96,7 +96,8 @@ class Cache:
             embeddings=self.embeddings_model.embed(prompt, **kwargs),
         )
 
-        matches = self.vector_store.search(prompt_vector, top_k=1, **kwargs)
+        # Adding the "top_k" as 1 in this search causes an error in the unitests
+        matches = self.vector_store.search(prompt_vector, **kwargs)
 
         if len(matches) == 0:
             return None, 0.0
