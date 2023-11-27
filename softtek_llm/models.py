@@ -490,7 +490,7 @@ class SofttekOpenAI(LLMModel):
 
         req = requests.post(
             "https://llm-api-stk.azurewebsites.net/chat/completions",
-            headers={"api-key": self.__api_key},
+            headers={"api-key": self.api_key},
             json={
                 "messages": messages,
                 "model": self.model_name,
