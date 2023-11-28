@@ -1,12 +1,14 @@
+import json
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
-from pinecone.core.client.configuration import Configuration as OpenApiConfiguration
 
 import pinecone
+import requests
+from pinecone.core.client.configuration import Configuration as OpenApiConfiguration
+from supabase import Client, create_client
 from typing_extensions import override
 
 from softtek_llm.schemas import Vector
-from supabase import Client, create_client
 
 
 class VectorStore(ABC):
@@ -189,12 +191,127 @@ class PineconeVectorStore(VectorStore):
         vectors = []
         for match in query_response.matches:
             metadata = vector.metadata if vector else {}
-            metadata.update(match.metadata)
+            if match.metadata:
+                metadata.update(match.metadata)
             metadata.update({"score": match.score})
             vectors.append(
                 Vector(
                     embeddings=match.values,
                     id=match.id,
+                    metadata=metadata,
+                )
+            )
+
+        return vectors
+
+
+class SofttekVectorStore(VectorStore):
+    def __init__(self, api_key: str):
+        super().__init__()
+        self.__api_key = api_key
+
+    @property
+    def api_key(self) -> str:
+        """The API key for authentication with the LLMOPs service."""
+        return self.__api_key
+
+    @override
+    def add(
+        self,
+        vectors: List[Vector],
+        namespace: str | None = None,
+        **kwargs: Any,
+    ):
+        data_to_add = []
+        ids = []
+        for vector in vectors:
+            if not vector.id:
+                raise ValueError("Vector ID cannot be empty when adding to Pinecone.")
+            if vector.id in ids:
+                raise ValueError(
+                    f"Vector ID {vector.id} is not unique to this batch. Please make sure all vectors have unique IDs."
+                )
+            data_to_add.append((vector.id, vector.embeddings, vector.metadata))
+            ids.append(vector.id)
+
+        kwargs.update({"vectors": data_to_add, "namespace": namespace})
+        response = requests.post(
+            "https://llm-api-stk.azurewebsites.net/vector-store/upsert",
+            headers={"api-key": self.api_key},
+            json=kwargs,
+        )
+        if response.status_code != 200:
+            raise Exception(response.reason)
+
+    @override
+    def delete(
+        self,
+        ids: List[str] | None = None,
+        delete_all: bool | None = None,
+        namespace: str | None = None,
+        filter: Dict | None = None,
+        **kwargs: Any,
+    ):
+        kwargs.update(
+            {
+                "ids": ids,
+                "delete_all": delete_all,
+                "namespace": namespace,
+                "filter": filter,
+            }
+        )
+        response = requests.post(
+            "https://llm-api-stk.azurewebsites.net/vector-store/delete",
+            headers={"api-key": self.api_key},
+            json=kwargs,
+        )
+
+        if response.status_code != 200:
+            raise Exception(response.reason)
+
+    @override
+    def search(
+        self,
+        vector: Vector | None = None,
+        id: str | None = None,
+        top_k: int = 1,
+        namespace: str | None = None,
+        filter: Dict | None = None,
+        **kwargs: Any,
+    ) -> List[Vector]:
+        kwargs.update(
+            {
+                "vector": vector.embeddings if vector else None,
+                "id": id,
+                "top_k": top_k,
+                "namespace": namespace,
+                "filter": filter,
+                "include_metadata": True,
+                "include_values": True,
+            }
+        )
+        response = requests.post(
+            "https://llm-api-stk.azurewebsites.net/vector-store/query",
+            headers={"api-key": self.api_key},
+            json=kwargs,
+        )
+
+        if response.status_code != 200:
+            raise Exception(response.reason)
+
+        json_response = response.json()
+
+        vectors = []
+        for match in json_response["matches"]:
+            metadata = vector.metadata if vector else {}
+            match_metadata = match.get("metadata")
+            if match_metadata:
+                metadata.update(match_metadata)
+            metadata.update({"score": match["score"]})
+            vectors.append(
+                Vector(
+                    embeddings=match["values"],
+                    id=match["id"],
                     metadata=metadata,
                 )
             )

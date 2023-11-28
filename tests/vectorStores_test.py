@@ -1,11 +1,13 @@
+import os
 import unittest
-from unittest.mock import patch, MagicMock
-from softtek_llm.vectorStores import PineconeVectorStore, Vector
+from unittest.mock import MagicMock, patch
+
+from softtek_llm.vectorStores import PineconeVectorStore, SofttekVectorStore, Vector
+
 
 class TestPineconeVectorStoreInit(unittest.TestCase):
-
-    @patch('pinecone.init')
-    @patch('pinecone.Index')
+    @patch("pinecone.init")
+    @patch("pinecone.Index")
     def test_init(self, mock_pinecone_index, mock_pinecone_init):
         # Mock the Pinecone init function
         api_key = "your_api_key"
@@ -16,12 +18,14 @@ class TestPineconeVectorStoreInit(unittest.TestCase):
         vector_store = PineconeVectorStore(api_key, environment, index_name)
 
         # Assert that pinecone.init was called with the correct arguments
-        mock_pinecone_init.assert_called_once_with(api_key=api_key, environment=environment)
+        mock_pinecone_init.assert_called_once_with(
+            api_key=api_key, environment=environment
+        )
 
         # Assert that pinecone.Index was called with the correct index_name
         mock_pinecone_index.assert_called_once_with(index_name)
 
-    @patch('pinecone.Index')
+    @patch("pinecone.Index")
     def setUp(self, mock_pinecone_index):
         # Mock the Pinecone Index instance
         self.mock_index = MagicMock()
@@ -31,7 +35,9 @@ class TestPineconeVectorStoreInit(unittest.TestCase):
         self.api_key = "your_api_key"
         self.environment = "your_environment"
         self.index_name = "your_index_name"
-        self.vector_store = PineconeVectorStore(self.api_key, self.environment, self.index_name)
+        self.vector_store = PineconeVectorStore(
+            self.api_key, self.environment, self.index_name
+        )
 
     def test_add_vectors(self):
         # Create some sample Vector objects
@@ -172,5 +178,82 @@ class TestPineconeVectorStoreInit(unittest.TestCase):
             filter=filter_dict,
         )
 
-if __name__ == '__main__':
+
+class TestSofttekVectorStoreInit(unittest.TestCase):
+    api_key = os.environ["LLMOPS_API_KEY"]
+
+    def test_bad_api_key(self):
+        # Create an instance of SofttekVectorStore with a bad API key
+        vector_store = SofttekVectorStore(api_key="bad_api_key")
+
+        with self.assertRaises(Exception) as context:
+            # Call the add method
+            vector_store.add([])
+
+            # Assert that the correct exception was raised
+            self.assertTrue(
+                "Unauthorized" in str(context.exception),
+                "Invalid API key error was not raised",
+            )
+
+    def test_init(self):
+        # Create an instance of SofttekVectorStore
+        vector_store = SofttekVectorStore(api_key=self.api_key)
+
+        # Assert that the vector_store is an instance of SofttekVectorStore
+        self.assertIsInstance(vector_store, SofttekVectorStore)
+
+    def test_add(self):
+        # Create some sample Vector objects
+        vectors = [
+            Vector(id="1", embeddings=[0.1] * 1536, metadata={"name": "vector_1"}),
+            Vector(id="2", embeddings=[0.4] * 1536, metadata={"name": "vector_2"}),
+            Vector(id="3", embeddings=[0.7] * 1536, metadata={"name": "vector_3"}),
+        ]
+
+        # Create an instance of SofttekVectorStore
+        vector_store = SofttekVectorStore(api_key=self.api_key)
+
+        # Call the add method
+        vector_store.add(vectors)
+        self.assertTrue(True)
+
+    def test_add_with_namespace(self):
+        # Create some sample Vector objects
+        vectors = [
+            Vector(id="1", embeddings=[0.1] * 1536, metadata={"name": "vector_1"}),
+            Vector(id="2", embeddings=[0.4] * 1536, metadata={"name": "vector_2"}),
+        ]
+        namespace = "custom_namespace"
+
+        # Create an instance of SofttekVectorStore
+        vector_store = SofttekVectorStore(api_key=self.api_key)
+
+        # Call the add method with a custom namespace
+        vector_store.add(vectors, namespace=namespace)
+        self.assertTrue(True)
+
+    def test_delete_ids(self):
+        # Define a list of vector IDs to delete
+        ids_to_delete = ["1"]
+
+        # Create an instance of SofttekVectorStore
+        vector_store = SofttekVectorStore(api_key=self.api_key)
+
+        # Call the delete method with a list of IDs
+        vector_store.delete(ids=ids_to_delete)
+        self.assertTrue(True)
+
+    def test_delete_all(self):
+        # Create an instance of SofttekVectorStore
+        vector_store = SofttekVectorStore(api_key=self.api_key)
+
+        # Call the delete method with delete_all=True
+        vector_store.delete(delete_all=True)
+        vector_store.delete(delete_all=True, namespace="custom_namespace")
+
+        self.assertTrue(True)
+
+
+if __name__ == "__main__":
     unittest.main()

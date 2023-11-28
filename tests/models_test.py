@@ -154,7 +154,7 @@ class TestOpenAI(unittest.TestCase):
             chat_model(memory, description="You are a chatbot.")
 
 class TestSofttekOpenAI(unittest.TestCase):
-    api_key = os.getenv("API_KEY")
+    api_key = os.getenv("LLMOPS_API_KEY")
     if api_key is None:
         raise ValueError("API_KEY environment variable must be set.")
     model_name = os.getenv("OPENAI_EMBEDDINGS_MODEL_NAME")

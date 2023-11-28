@@ -96,15 +96,12 @@ class Cache:
             embeddings=self.embeddings_model.embed(prompt, **kwargs),
         )
 
-        matches = sorted(
-            self.vector_store.search(prompt_vector, **kwargs),
-            key=lambda x: x.metadata["score"],
-            reverse=True,
-        )
+        # Adding the "top_k" as 1 in this search causes an error in the unitests
+        matches = self.vector_store.search(prompt_vector, **kwargs)
 
         if len(matches) == 0:
             return None, 0.0
-
+        
         best_match = matches[0]
 
         if best_match.metadata["score"] < threshold:

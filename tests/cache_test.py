@@ -47,33 +47,6 @@ class TestCacheClass(unittest.TestCase):
             ]
         )
 
-    # def test_retrieve_existing(self):
-    #     prompt = "test prompt"
-    #     embeddings = np.array([0.1, 0.2, 0.3])
-    #     vector = Vector(
-    #         embeddings=embeddings,
-    #         metadata={"response": "test response", "model": "", "score": 1.0},
-    #     )
-    #     expected_response = Response(
-    #         message=Message(role="assistant", content="test response"),
-    #         created=int(datetime.utcnow().timestamp()),
-    #         latency=0,
-    #         from_cache=True,
-    #         model="",
-    #         additional_kwargs={},
-    #     )
-
-    #     self.embeddings_model.embed.return_value = embeddings
-    #     self.vector_store.search.return_value = [vector]
-
-    #     response = self.cache.retrieve(prompt)
-
-    #     self.embeddings_model.embed.assert_called_once_with(prompt)
-    #     self.vector_store.search.assert_called_once_with(
-    #         Vector(embeddings=embeddings)
-    #     )
-    #     self.assertEqual(response, expected_response)
-
     def test_retrieve_not_found(self):
         prompt = "test prompt"
         embeddings = np.array([0.1, 0.2, 0.3])
