@@ -1,6 +1,6 @@
 import json
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 
 import pinecone
 import requests
@@ -9,6 +9,18 @@ from supabase import Client, create_client
 from typing_extensions import override
 
 from softtek_llm.schemas import Vector
+
+import numpy as np
+import pickle
+import os
+from faiss import (
+    IndexFlatL2,
+    IndexFlatIP,
+    IndexScalarQuantizer,
+    write_index,
+    read_index,
+)
+from pathlib import Path
 
 
 class VectorStore(ABC):
@@ -203,6 +215,415 @@ class PineconeVectorStore(VectorStore):
             )
 
         return vectors
+
+
+class FAISSVectorStore(VectorStore):
+    __methods_suported = {
+        "IndexFlatL2": IndexFlatL2,
+        "IndexFlatIP": IndexFlatIP,
+        "IndexScalarQuantizer": IndexScalarQuantizer,
+    }
+
+    @override
+    def __init__(
+        self,
+        local_id: Dict[str | None, List[Vector]] = None,
+        index: Dict[str | None, Any] = None,
+    ):
+        """
+        Initialize a FAISSVectorStore object for managing vectors in a FAISS index.
+
+        Args:
+            `local_id` (Dict[str | None, List[Vector], optional): A dictionary with the list of Vector objects of each namespace.
+            `index` (Dict[str | None, Any], optional): A dictionary with the FAISS index of each namespace.
+
+        Raises:
+            ValueError: If the user provides only one of the arguments.
+
+        Note:
+            The `None` key in both arguments refers to the general namespace.
+        """
+        if local_id and index:
+            self.__local_id: Dict[str | None, List[Vector]] = local_id
+            self.__index: Dict[str | None, Any] = index
+        elif local_id is None and index is None:
+            self.__local_id: Dict[str | None, List[Vector]] = dict()
+            self.__index: Dict[str | None, Any] = dict()
+        else:
+            raise ValueError("You must provide both `local_id` and `index` or neither.")
+
+    @property
+    def local_id(self):
+        """A dictionary with the list of Vector objects of each namespace."""
+        return self.__local_id
+
+    @property
+    def index(self):
+        """A dictionary with the index of each namespace."""
+        return self.__index
+
+    def __return_ids(self, ids: List[str], namespace: str | None) -> np.array:
+        """
+        Creates a Numpy array with the positional ids of the given Vectors ids.
+
+        Args:
+            `ids` (List[str]): A list with the ids of the Vector objects.
+            `namespace` (str | None): The namespace where the Vector objects are stored.
+
+        Returns:
+            `ids_to_return` (np.array): An array of the positional ids of the Vectors objects.
+
+        Raises:
+            ValueError: If it does not find all the ids.
+        """
+        ids_to_return = [
+            i for i, vector in enumerate(self.__local_id[namespace]) if vector.id in ids
+        ]
+
+        if len(ids_to_return) != len(ids):
+            raise ValueError("Did not found all the ids provided.")
+
+        return np.array(ids_to_return)
+
+    def __return_embeddings(self, id: str, namespace: str | None) -> np.array:
+        """
+        Creates a Numpy array with the embeddings of the given Vector id.
+
+        Args:
+            `id` (str): The id of the Vector object.
+            `namespace` (str | None): The namespace where the Vector objects are stored.
+
+        Returns:
+            `embeddings` (np.array): An array of the embeddings of the Vector object.
+
+        Raises:
+            ValueError: If it does not find the id.
+        """
+        embeddings = None
+
+        for vector in self.__local_id[namespace]:
+            if vector.id == id:
+                embeddings = vector.embeddings
+                break
+
+        if embeddings is None:
+            raise ValueError(f"Did not found the id {id}.")
+
+        return np.array([embeddings])
+
+    def __return_vectors(
+        self, ids: List[int], distance: List[float], namespace: str | None
+    ) -> List[Vector]:
+        """
+        Updates the score in the metadata of each Vector object, and creates a list of Vector objects given their positional ids.
+
+        Args:
+            `ids` (List[int]): The positional ids of the Vector objects to return.
+            `distance` (List[float]): The distance score of each Vector object.
+            `namespace` (str | None): The namespace where the Vector objects are stored.
+
+        Returns:
+            `vectors_to_return` (List[Vector]): A list of Vector objects.
+        """
+        vectors_to_return = list()
+        to_update = list()
+
+        for id in ids:
+            if id != -1:
+                vector_ = None
+                for i, vector in enumerate(self.__local_id[namespace]):
+                    if id == i:
+                        vector_ = vector
+                        break
+
+                metadata = vector_.metadata
+                metadata.update({"score": distance[id]})
+
+                new_vector = Vector(
+                    embeddings=vector_.embeddings, id=vector_.id, metadata=metadata
+                )
+
+                vectors_to_return.append(new_vector)
+
+                to_update.append((id, new_vector))
+
+        for i, vector in to_update:
+            self.__local_id[namespace][i] = vector
+
+        return vectors_to_return
+
+    def __remove_ids(self, ids: List[str], namespace: str | None):
+        """
+        Removes the given Vector objects from the `local_id` list.
+
+        Args:
+            `ids` (List[int]): The positional ids of the Vector objects to return.
+            `namespace` (str | None): The namespace where the Vector objects are stored.
+
+        Raises:
+            ValueError: if it does not find all the ids.
+        """
+        new_list = [
+            vector for vector in self.__local_id[namespace] if vector.id not in ids
+        ]
+
+        if len(new_list) != len(ids):
+            raise ValueError("Did not found all the ids provided.")
+
+        self.__local_id[namespace] = new_list
+
+    @override
+    def add(
+        self,
+        vectors: List[Vector],
+        namespace: str | None = None,
+        method: Literal["IndexFlatL2", "IndexFlatIP", "IndexScalarQuantizer"] = None,
+    ):
+        """
+        Adds the given Vector objects to the namespace.
+        If the namespace does not exist, it is created with the given method. If not method is provided, `IndexFlatL2` is used.
+
+        Args:
+            `vectors` (List[Vector]): The list of Vector objects to be added.
+            `namespace` (str | None, optional): The namespace where the Vector objects are going to be added. The dedault is `None`.
+            `method` (Literal['IndexFlatL2', 'IndexFlatIP', 'IndexScalarQuantizer'], optional): The method to be used if the namespace does not exist yet. The default is `IndexFlatL2`.
+
+        Raises:
+            ValueError: if an id is not unique within the given vectors or within the namespace.
+            ValueError: if the dimension (d) of any of the vectors is different to the dimension set in the index.
+        """
+        if namespace not in self.__local_id.keys():
+            self.__local_id[namespace] = list()
+
+            if method in self.__methods_suported.keys():
+                self.__index[namespace] = self.__methods_suported[method](
+                    len(vectors[0].embeddings)
+                )
+            if not method:
+                self.__index[namespace] = IndexFlatL2(len(vectors[0].embeddings))
+
+        ids = [vector.id for vector in self.__local_id[namespace]]
+        ids_vector = list()
+
+        for vector in vectors:
+            if vector.id in ids or vector.id in ids_vector:
+                raise ValueError(
+                    f"The id {vector.id} is duplicated. The ids must be unique."
+                )
+            ids_vector.append(vector.id)
+
+            if len(vector.embeddings) != self.__index[namespace].d:
+                raise ValueError(
+                    f"Vectors must be size {self.__index[namespace].d} but got size {len(vector.embeddings)} instead."
+                )
+
+        data_to_add = [vector.embeddings for vector in vectors]
+
+        self.__index[namespace].add(x=np.array(data_to_add))
+
+        self.__local_id[namespace] += vectors
+
+    @override
+    def delete(
+        self,
+        ids: List[str] = None,
+        delete_all: bool = False,
+        namespace: str | None = None,
+    ):
+        """
+        Deletes the given Vector objects or all the Vector objects of the given namespace.
+
+        Args:
+            `ids` (List[str], optional): The list of Vector objects to be deleted from the given namespace.
+            `delete_all` (bool, optional): If set `True`, all the Vector objects will be deleted from the given namespace.
+            `namespace` (str | None, optional): The namespace where the Vector objects are going to be deleted from. The dedault is `None`.
+
+        Raises:
+            ValueError: if the namespace does not exist.
+            ValueError: if neither `ids` nor `delete_all` are given.
+
+        Note:
+            You must provide either `ids` or `delete_all`. And if both are given `ids` has the priority.
+        """
+        if namespace not in self.__local_id.keys():
+            raise ValueError(f"The namespace {namespace} does not exist.")
+
+        if ids is not None:
+            ids_to_delete = self.__return_ids(ids=ids, namespace=namespace)
+            self.__index[namespace].remove_ids(x=ids_to_delete)
+            self.__remove_ids(ids=ids, namespace=namespace)
+        elif delete_all:
+            self.__index[namespace].reset()
+            self.__local_id[namespace].clear()
+        else:
+            raise ValueError("You must provide either `ids` or `delete_all=True`")
+
+    @override
+    def search(
+        self,
+        vector: Vector = None,
+        id: str = None,
+        top_k: int = 1,
+        namespace: str | None = None,
+    ) -> List[Vector]:
+        """
+        Searches for the top `top_k` closest Vector objects to the given Vector object or id.
+
+        Args:
+            `vector` (Vector, optional): The Vector object to be compared to.
+            `id` (str, optional): The id of the Vector object to be compared to.
+            `top_k` (int, optional): The number of top Vector objects to be returned.
+            `namespace` (str | None, optional): The namespace of the index that is going to be used. The dedault is `None`.
+
+        Returns:
+            `vectors`(List[Vector]): The list of top Vector objects.
+
+        Raises:
+            ValueError: if the namespace does not exist.
+            ValueError: if neither `vector` nor `id` are given.
+
+        Note:
+            You must provide either `vector` or `id`. If both are given `vector` has the priority.
+        """
+        if namespace not in self.__local_id.keys():
+            raise ValueError(f"The namespace {namespace} does not exist.")
+
+        if vector:
+            D, I = self.__index[namespace].search(
+                x=np.array([vector.embeddings]), k=top_k
+            )
+
+            vectors = self.__return_vectors(
+                ids=I.tolist()[0], distance=D.tolist()[0], namespace=namespace
+            )
+        elif id:
+            id_to_search = self.__return_embeddings(ids=[id], namespace=namespace)
+
+            D, I = self.__index[namespace].search(x=id_to_search, k=top_k)
+
+            vectors = self.__return_vectors(
+                ids=I.tolist()[0], distance=D.tolist()[0], namespace=namespace
+            )
+        else:
+            raise ValueError("You must provide either `vector` or `id`.")
+
+        return vectors
+
+    def save_local(
+        self,
+        dir_path: str = ".",
+        namespace: str | None = None,
+        save_all: bool = False,
+    ):
+        """
+        Saves both the index and the local_id objects from the given namespace or from all the namespaces.
+        If not `folder_path` is provided, it is stored in the current directory.
+        If the folder does not exist, it is created.
+
+        Args:
+            `dir_path` (str, optional): The path to which all the files will be saved. The default is the current directory.
+            `namespace` (str | None, optional): The namespace the will be saved. The dedault is `None`.
+            `save_all` (bool, optional): If set `True`, all the namespaces will be saved.
+
+        Raises:
+            ValueError: if the namespace does not exist.
+            ValueError: if neither `namespace` nor `save_all` are given.
+
+        Note:
+            You must provide either `namespace` or `save_all`. If both are given `save_all` has the priority.
+        """
+        path = Path(dir_path)
+        path.mkdir(exist_ok=True, parents=True)
+
+        if save_all:
+            for namespace_ in self.__index.keys():
+                write_index(
+                    self.__index[namespace_],
+                    os.path.join(
+                        path,
+                        f"{'index' if namespace_ is None else namespace_ + '_index'}.faiss",
+                    ),
+                )
+
+                with open(
+                    os.path.join(
+                        path,
+                        f"{'index' if namespace_ is None else namespace_ + '_index'}.pkl",
+                    ),
+                    "wb",
+                ) as f:
+                    pickle.dump(self.__local_id[namespace_], f)
+        elif namespace is not None:
+            if namespace not in self.__local_id.keys():
+                raise ValueError(f"The namespace `{namespace}` does not exist.")
+
+            write_index(
+                self.__index[namespace],
+                os.path.join(
+                    path,
+                    f"{'index' if namespace is None else namespace_ + '_index'}.faiss",
+                ),
+            )
+
+            with open(
+                os.path.join(
+                    path,
+                    f"{'index' if namespace is None else namespace + '_index'}.pkl",
+                ),
+                "wb",
+            ) as f:
+                pickle.dump(self.__local_id[namespace], f)
+        else:
+            ValueError("You must prove `namespace` or `save_all=True`.")
+
+    @classmethod
+    def load_local(cls, namespaces: List[str | None], dir_path: str = "."):
+        """
+        Creates a FAISSVectorStore from a list of `namespaces` stored in the `dir_path`.
+
+        Args:
+            `namespaces` (List[str | None]): The namespaces that will be retrieved.
+            `dir_path` (str, optional): The path to which all the files will be retrieved. The default is the current directory.
+
+        Raises:
+            ValueError: if the given directory does not exist.
+            ValueError: if a file is not found.
+
+        Note:
+            If you want to load the default index, include `None` in the list.
+            Only if both the `.faiss` and `.pkl` files are found, the namespace is stored.
+            If a namespace raises an error, it will be passed.
+        """
+        path = Path(dir_path)
+
+        if not os.path.isdir(path):
+            raise ValueError(f"The given directory does not exist: {dir_path}.")
+
+        local_id_: Dict[str | None, List[Vector]] = dict()
+        index_: Dict[str | None, Any] = dict()
+
+        for namespace in namespaces:
+            try:
+                index = read_index(
+                    str(
+                        path
+                        / f"{'index' if namespace is None else namespace + '_index'}.faiss"
+                    )
+                )
+
+                with open(
+                    path
+                    / f"{'index' if namespace is None else namespace + '_index'}.pkl",
+                    "rb",
+                ) as f:
+                    ids = pickle.load(f)
+
+                index_[namespace] = index
+                local_id_[namespace] = ids
+            except Exception as e:
+                print(f"Did not found the file(s) for the namespace `{namespace}`")
+
+        return cls(local_id_, index_)
 
 
 class SofttekVectorStore(VectorStore):
