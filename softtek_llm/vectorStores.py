@@ -229,13 +229,19 @@ class FAISSVectorStore(VectorStore):
         self,
         local_id: Dict[str | None, List[Vector]] = None,
         index: Dict[str | None, Any] = None,
+        method: Literal[
+            "IndexFlatL2", "IndexFlatIP", "IndexScalarQuantizer"
+        ] = "IndexFlatL2",
+        d: int = 1536,
     ):
         """
-        Initialize a FAISSVectorStore object for managing vectors in a FAISS index.
+        Initialize a FAISSVectorStore object to manage vectors in a FAISS index.
 
         Args:
             `local_id` (Dict[str | None, List[Vector], optional): A dictionary with the list of Vector objects of each namespace.
             `index` (Dict[str | None, Any], optional): A dictionary with the FAISS index of each namespace.
+            `method` (Literal['IndexFlatL2', 'IndexFlatIP', 'IndexScalarQuantizer'], optional): The method to be used for the index. The default is 'IndexFlatL2'.
+            `d` (int, optional): The dimension of the Vector embeddings to be stored. The default is 1536.
 
         Raises:
             ValueError: If the user provides only one of the arguments.
@@ -247,8 +253,10 @@ class FAISSVectorStore(VectorStore):
             self.__local_id: Dict[str | None, List[Vector]] = local_id
             self.__index: Dict[str | None, Any] = index
         elif local_id is None and index is None:
-            self.__local_id: Dict[str | None, List[Vector]] = dict()
-            self.__index: Dict[str | None, Any] = dict()
+            self.__local_id: Dict[str | None, List[Vector]] = {None: []}
+            self.__index: Dict[str | None, Any] = {
+                None: self.__methods_suported[method](d)
+            }
         else:
             raise ValueError("You must provide both `local_id` and `index` or neither.")
 
@@ -328,7 +336,7 @@ class FAISSVectorStore(VectorStore):
         vectors_to_return = list()
         to_update = list()
 
-        for id in ids:
+        for i_, id in enumerate(ids):
             if id != -1:
                 vector_ = None
                 for i, vector in enumerate(self.__local_id[namespace]):
@@ -337,7 +345,7 @@ class FAISSVectorStore(VectorStore):
                         break
 
                 metadata = vector_.metadata
-                metadata.update({"score": distance[id]})
+                metadata.update({"score": distance[i_]})
 
                 new_vector = Vector(
                     embeddings=vector_.embeddings, id=vector_.id, metadata=metadata
@@ -392,6 +400,8 @@ class FAISSVectorStore(VectorStore):
             ValueError: if an id is not unique within the given vectors or within the namespace.
             ValueError: if the dimension (d) of any of the vectors is different to the dimension set in the index.
         """
+        print(vectors)
+
         if namespace not in self.__local_id.keys():
             self.__local_id[namespace] = list()
 
@@ -465,6 +475,7 @@ class FAISSVectorStore(VectorStore):
         id: str = None,
         top_k: int = 1,
         namespace: str | None = None,
+        **kwargs,
     ) -> List[Vector]:
         """
         Searches for the top `top_k` closest Vector objects to the given Vector object or id.
@@ -485,27 +496,33 @@ class FAISSVectorStore(VectorStore):
         Note:
             You must provide either `vector` or `id`. If both are given `vector` has the priority.
         """
+        if "namespace" in kwargs:
+            namespace = kwargs["namespace"]
+
         if namespace not in self.__local_id.keys():
             raise ValueError(f"The namespace {namespace} does not exist.")
 
-        if vector:
-            D, I = self.__index[namespace].search(
-                x=np.array([vector.embeddings]), k=top_k
-            )
+        if self.__index[namespace].ntotal > 0:
+            if vector:
+                D, I = self.__index[namespace].search(
+                    x=np.array([vector.embeddings]), k=top_k
+                )
 
-            vectors = self.__return_vectors(
-                ids=I.tolist()[0], distance=D.tolist()[0], namespace=namespace
-            )
-        elif id:
-            id_to_search = self.__return_embeddings(ids=[id], namespace=namespace)
+                vectors = self.__return_vectors(
+                    ids=I.tolist()[0], distance=D.tolist()[0], namespace=namespace
+                )
+            elif id:
+                id_to_search = self.__return_embeddings(ids=[id], namespace=namespace)
 
-            D, I = self.__index[namespace].search(x=id_to_search, k=top_k)
+                D, I = self.__index[namespace].search(x=id_to_search, k=top_k)
 
-            vectors = self.__return_vectors(
-                ids=I.tolist()[0], distance=D.tolist()[0], namespace=namespace
-            )
+                vectors = self.__return_vectors(
+                    ids=I.tolist()[0], distance=D.tolist()[0], namespace=namespace
+                )
+            else:
+                raise ValueError("You must provide either `vector` or `id`.")
         else:
-            raise ValueError("You must provide either `vector` or `id`.")
+            vectors = []
 
         return vectors
 
@@ -527,7 +544,6 @@ class FAISSVectorStore(VectorStore):
 
         Raises:
             ValueError: if the namespace does not exist.
-            ValueError: if neither `namespace` nor `save_all` are given.
 
         Note:
             You must provide either `namespace` or `save_all`. If both are given `save_all` has the priority.
@@ -553,7 +569,7 @@ class FAISSVectorStore(VectorStore):
                     "wb",
                 ) as f:
                     pickle.dump(self.__local_id[namespace_], f)
-        elif namespace is not None:
+        else:
             if namespace not in self.__local_id.keys():
                 raise ValueError(f"The namespace `{namespace}` does not exist.")
 
@@ -573,21 +589,29 @@ class FAISSVectorStore(VectorStore):
                 "wb",
             ) as f:
                 pickle.dump(self.__local_id[namespace], f)
-        else:
-            ValueError("You must prove `namespace` or `save_all=True`.")
 
     @classmethod
-    def load_local(cls, namespaces: List[str | None], dir_path: str = "."):
+    def load_local(
+        cls,
+        namespaces: List[str | None],
+        dir_path: str = ".",
+        method: Literal[
+            "IndexFlatL2", "IndexFlatIP", "IndexScalarQuantizer"
+        ] = "IndexFlatL2",
+        d: int = 1536,
+    ):
         """
         Creates a FAISSVectorStore from a list of `namespaces` stored in the `dir_path`.
 
         Args:
             `namespaces` (List[str | None]): The namespaces that will be retrieved.
             `dir_path` (str, optional): The path to which all the files will be retrieved. The default is the current directory.
+            `method` (Literal['IndexFlatL2', 'IndexFlatIP', 'IndexScalarQuantizer'], optional): The method to be used for the index. The default is 'IndexFlatL2'.
+            `d` (int, optional): The dimension of the Vector embeddings to be stored. The default is 1536.
 
         Raises:
             ValueError: if the given directory does not exist.
-            ValueError: if a file is not found.
+            ValueError: if something goes wrong with the files.
 
         Note:
             If you want to load the default index, include `None` in the list.
@@ -621,7 +645,13 @@ class FAISSVectorStore(VectorStore):
                 index_[namespace] = index
                 local_id_[namespace] = ids
             except Exception as e:
-                print(f"Did not found the file(s) for the namespace `{namespace}`")
+                raise RuntimeError(
+                    f"Something wrong happend with the file(s) for the namespace `{namespace}`"
+                )
+
+        if None not in index_.keys():
+            index_[None] = []
+            local_id_[None] = cls.__methods_suported[method](d)
 
         return cls(local_id_, index_)
 

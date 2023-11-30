@@ -19,12 +19,12 @@ class TestFAISSVectorStoreInit(unittest.TestCase):
     vector = Vector(id="6", embeddings=[0.3, 0.2, 0.1], metadata={"name": "vector_6"})
 
     def setUp(self):
-        self.vector_store = FAISSVectorStore()
+        self.vector_store = FAISSVectorStore(d=3)
 
     def test_empty_vector_store(self):
         # Assert the index and local_id
-        self.assertEqual(self.vector_store.index, dict())
-        self.assertEqual(self.vector_store.local_id, dict())
+        self.assertEqual(self.vector_store.index[None].ntotal, 0)
+        self.assertEqual(self.vector_store.local_id[None], list())
 
     def test_add_vectors(self):
         # Adds vectors
@@ -45,12 +45,13 @@ class TestFAISSVectorStoreInit(unittest.TestCase):
     def test_search_vector(self):
         # Adds vectors
         self.vector_store.add(vectors=self.vectors_1)
+        self.vector_store.add(vectors=self.vectors_2)
 
         # Search
-        vectors = self.vector_store.search(vector=self.vector)
+        vectors = self.vector_store.search(vector=self.vector, top_k=3)
 
         # Assert the top_k = 1 to the first vector of vector_1
-        self.assertEqual(vectors[0], self.vectors_1[0])
+        self.assertEqual(vectors, [self.vectors_1[0], self.vectors_2[0], self.vectors_1[1]])
 
     def test_save_local_and_load_local(self):
         # Adds vectors
@@ -72,7 +73,7 @@ class TestFAISSVectorStoreInit(unittest.TestCase):
 
         # Create object from a list of namespaces
         vs = FAISSVectorStore.load_local(
-            dir_path=self.path, namespaces=[None, self.namespace]
+            dir_path=self.path, namespaces=[None, self.namespace], d=3
         )
 
         # Asser the Class and the keys loaded
