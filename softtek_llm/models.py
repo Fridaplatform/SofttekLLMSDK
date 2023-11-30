@@ -347,13 +347,13 @@ class SofttekOpenAI(LLMModel):
         Args:
             `api_key` (str): LLMOPs API key.
 
-            `model_name` (str): Name of the 
+            `model_name` (str): Name of the
             model.
 
             `max_tokens` (int | None, optional): T
-            he maximum number of tokens 
+            he maximum number of tokens
             to generate in the chat completion. The total length of input tokens and generated tokens is limited by the model's context length. Defaults to None.
-            
+
             `temperature` (float, optional): What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. Defaults to 1.
 
             `presence_penalty` (float, optional): Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics. Defaults to 0.
@@ -517,19 +517,27 @@ class SofttekOpenAI(LLMModel):
         return self.__api_key
 
     @override
-    def __call__(self, memory: Memory, description: str = "You are a bot.") -> Response:
+    def __call__(
+        self,
+        memory: Memory,
+        description: str = "You are a bot.",
+        logging_kwargs: Dict = {},
+    ) -> Response:
         """
         Conversational interface that interacts with the SofttekOpenAI Chat API to generate a response.
 
         Args:
-            `memory` (Memory): An instance of the Memory class that holds previous conversation messages.\n
+            `memory` (Memory): An instance of the Memory class that holds previous conversation messages.
+
             `description` (str, optional): A description of the conversation. Defaults to "You are a bot.".
+
+            `logging_kwargs` (Dict, optional): A dictionary containing the parameters to be logged. Defaults to {}.
 
         Raises:
             `Exception`: If the API request to the OpenAI Chat API returns a status code other than 200.
 
         Returns:
-            `resp` (Response): An instance of the Response class that contains the generated response.
+            `Response`: An instance of the Response class that contains the generated response.
         """
         start = perf_counter_ns()
         messages = [message.model_dump() for message in memory.get_messages()]
@@ -552,11 +560,12 @@ class SofttekOpenAI(LLMModel):
                 "stop": self.stop,
                 "top_p": self.top_p,
                 "user": self.user,
+                "additional_kwargs": logging_kwargs,
             },
         )
 
         if req.status_code != 200:
-            raise Exception(req.reason)
+            raise Exception(req.json()["detail"])
 
         answer = OpenAIChatResponse(**req.json())
 
@@ -569,6 +578,7 @@ class SofttekOpenAI(LLMModel):
             from_cache=False,
             model=answer.model,
             usage=answer.usage,
+            additional_kwargs=logging_kwargs,
         )
 
         memory.add_message(resp.message.role, resp.message.content)

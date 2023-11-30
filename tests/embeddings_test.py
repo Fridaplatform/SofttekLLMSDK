@@ -54,6 +54,7 @@ class TestOpenAIEmbeddings(unittest.TestCase):
                 api_type=api_type,
             )
 
+
 class TestSofttekOpenAIEmbeddings(unittest.TestCase):
     api_key = os.getenv("API_KEY")
     if api_key is None:
@@ -64,7 +65,7 @@ class TestSofttekOpenAIEmbeddings(unittest.TestCase):
             "OPENAI_EMBEDDINGS_MODEL_NAME environment variable must be set."
         )
 
-    def test_embed(self): 
+    def test_embed(self):
         embeddings_model = SofttekOpenAIEmbeddings(
             api_key=self.api_key,
             model_name=self.model_name,
@@ -88,4 +89,16 @@ class TestSofttekOpenAIEmbeddings(unittest.TestCase):
             SofttekOpenAIEmbeddings(
                 model_name=self.model_name,
             )
-    
+
+    def test_embed_additional_kwargs(self):
+        embeddings_model = SofttekOpenAIEmbeddings(
+            api_key=self.api_key,
+            model_name=self.model_name,
+        )
+
+        embeddings = embeddings_model.embed(
+            "Hello, world!", additional_kwargs={"test": True}
+        )
+        self.assertIsInstance(embeddings, list)
+        self.assertIsInstance(embeddings[0], float)
+        self.assertEqual(len(embeddings), 1536)

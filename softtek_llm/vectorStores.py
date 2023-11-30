@@ -295,7 +295,7 @@ class SofttekVectorStore(VectorStore):
             json=kwargs,
         )
         if response.status_code != 200:
-            raise Exception(response.reason)
+            raise Exception(response.json()["detail"])
 
     @override
     def delete(
@@ -332,7 +332,7 @@ class SofttekVectorStore(VectorStore):
         )
 
         if response.status_code != 200:
-            raise Exception(response.reason)
+            raise Exception(response.json()["detail"])
 
     @override
     def search(
@@ -377,7 +377,7 @@ class SofttekVectorStore(VectorStore):
         )
 
         if response.status_code != 200:
-            raise Exception(response.reason)
+            raise Exception(response.json()["detail"])
 
         json_response = response.json()
 
