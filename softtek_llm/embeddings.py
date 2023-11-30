@@ -45,7 +45,7 @@ class OpenAIEmbeddings(EmbeddingsModel):
     # OpenAI Embeddings
     Creates an OpenAI embeddings model. This class is a subclass of the EmbeddingsModel abstract base class.
 
-    ## Properties
+    ## Attributes
     - `model_name`: Embeddings model name.
 
     ## Methods
