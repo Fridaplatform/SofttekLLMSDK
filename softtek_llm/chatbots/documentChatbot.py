@@ -252,13 +252,19 @@ class DocumentChatBot(Chatbot):
             namespace=self.knowledge_base_namespace,
         )
 
-    def __call_model(self, include_context: bool, top_documents: int) -> Response:
+    def __call_model(
+        self,
+        include_context: bool,
+        top_documents: int,
+        logging_kwargs: Dict | None = None,
+    ) -> Response:
         """This method is used to call the model and returns a Response object.
 
 
         Args:
             `include_context` (bool): Whether to include the context in the response.
             `top_documents` (int): The number of documents to consider.
+            `logging_kwargs` (Dict | None, optional): Additional keyword arguments to be passed to the logging function. Defaults to None.
 
         Returns:
             `Response`: The response of the model.
@@ -284,7 +290,7 @@ class DocumentChatBot(Chatbot):
                     sources.append(source)
         else:
             raise KnowledgeBaseEmpty("The knowledge base is empty")
-        
+
         context = "\n".join([vector.metadata["text"] for vector in similar_vectors])
 
         # * Prepare new memory
@@ -296,7 +302,13 @@ class DocumentChatBot(Chatbot):
         )
 
         # * Call model
-        response = self.model(memory, description=self.description)
+        response = (
+            self.model(self.memory, description=self.description)
+            if logging_kwargs is None
+            else self.model(
+                self.memory, description=self.description, logging_kwargs=logging_kwargs
+            )
+        )
 
         # * Update original memory
         self.memory.add_message(**response.message.model_dump())
@@ -316,6 +328,7 @@ class DocumentChatBot(Chatbot):
         include_context: bool = False,
         top_documents: int = 5,
         cache_kwargs: Dict = {},
+        logging_kwargs: Dict | None = None,
     ) -> Response:
         """Chatbot function that returns a response given a prompt. If a memory and/or cache are available, it considers previously stored conversations. Filters are applied to the prompt before processing to ensure it is valid.
 
@@ -349,7 +362,9 @@ class DocumentChatBot(Chatbot):
 
         self.memory.add_message(role="user", content=prompt)
         if not self.cache:
-            last_message = self.__call_model(include_context, top_documents)
+            last_message = self.__call_model(
+                include_context, top_documents, logging_kwargs
+            )
         else:
             if self._random_boolean():
                 cached_response, cache_score = self.cache.retrieve(
@@ -364,9 +379,13 @@ class DocumentChatBot(Chatbot):
                     )
                     last_message = cached_response
                 else:
-                    last_message = self.__call_model(include_context, top_documents)
+                    last_message = self.__call_model(
+                        include_context, top_documents, logging_kwargs
+                    )
                     self.cache.add(prompt=prompt, response=last_message, **cache_kwargs)
             else:
-                last_message = self.__call_model(include_context, top_documents)
+                last_message = self.__call_model(
+                    include_context, top_documents, logging_kwargs
+                )
 
         return last_message

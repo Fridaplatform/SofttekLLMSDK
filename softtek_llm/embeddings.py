@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Any, List, Literal
+from typing import Any, Dict, List, Literal
 
 import openai
-from typing_extensions import override
-
 import requests
+from typing_extensions import override
 
 from softtek_llm.utils import setup_azure
 
@@ -110,8 +109,27 @@ class OpenAIEmbeddings(EmbeddingsModel):
 
 
 class SofttekOpenAIEmbeddings(EmbeddingsModel):
+    """
+    # Softtek OpenAI Embeddings
+    Creates a Softtek OpenAI embeddings model. This class is a subclass of the EmbeddingsModel abstract base class.
+
+    ## Attributes
+    - `model_name`: Embeddings model name.
+    - `api_key`: API key for the Softtek OpenAI API.
+
+    ## Methods
+    - `embed`: Embeds a prompt into a list of floats.
+    """
+
     @override
     def __init__(self, model_name: str, api_key: str):
+        """Initializes the SofttekOpenAIEmbeddings class.
+
+        Args:
+            `model_name` (str): Name of the embeddings model.
+
+            `api_key` (str): API key for the Softtek OpenAI API.
+        """
         super().__init__()
         self.__model_name = model_name
         self.__api_key = api_key
@@ -122,10 +140,28 @@ class SofttekOpenAIEmbeddings(EmbeddingsModel):
         return self.__model_name
 
     @override
-    def embed(self, prompt: str) -> List[float]:
+    def embed(self, prompt: str, additional_kwargs: Dict = {}) -> List[float]:
+        """Embeds a prompt into a list of floats.
+
+        Args:
+            `prompt` (str): Prompt to embed.
+
+            `additional_kwargs` (Dict, optional): Additional keyword arguments. Defaults to {}.
+
+        Returns:
+            `List[float]`: Embedding of the prompt as a list of floats.
+        """
         response = requests.post(
             "https://llm-api-stk.azurewebsites.net/embeddings",
             headers={"api-key": self.__api_key},
-            json={"input": prompt, "model": self.model_name},
+            json={
+                "input": prompt,
+                "model": self.model_name,
+                "additional_kwargs": additional_kwargs,
+            },
         )
+
+        if response.status_code != 200:
+            raise Exception(response.json()["detail"])
+
         return response.json()["data"][0]["embedding"]
