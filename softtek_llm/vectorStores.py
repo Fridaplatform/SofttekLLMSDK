@@ -484,7 +484,7 @@ class FAISSVectorStore(VectorStore):
             namespace = kwargs["namespace"]
 
         if namespace not in self.__local_id.keys():
-            raise ValueError(f"The namespace {namespace} does not exist.")
+            return []
 
         if self.__index[namespace].ntotal > 0:
             if vector:
