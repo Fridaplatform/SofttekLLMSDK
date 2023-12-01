@@ -63,13 +63,17 @@ class Cache:
             `prompt` (str): A string prompt to which the function will respond to.
             `response` (Response): A Response object containing the model's reply, timestamp, latency, and model name.
         """
+        metadata = response.additional_kwargs.copy()
+        metadata.update(
+            {
+                "response": response.message.content,
+                "model": response.model,
+            }
+        )
         vector = Vector(
             embeddings=self.embeddings_model.embed(prompt, **kwargs),
             id=str(uuid1()),
-            metadata={
-                "response": response.message.content,
-                "model": response.model,
-            },
+            metadata=metadata,
         )
 
         self.vector_store.add([vector], **kwargs)
@@ -103,20 +107,22 @@ class Cache:
             return None, 0.0
         
         best_match = matches[0]
+        score = best_match.metadata.pop("score")
+        if score < threshold:
+            return None, score
 
-        if best_match.metadata["score"] < threshold:
-            return None, best_match.metadata["score"]
+        additional_kwargs.update(best_match.metadata)
 
         return (
             Response(
                 message=Message(
-                    role="assistant", content=best_match.metadata["response"]
+                    role="assistant", content=additional_kwargs.pop("response")
                 ),
                 created=int(datetime.utcnow().timestamp()),
                 latency=int((perf_counter_ns() - start) / 1e6),
                 from_cache=True,
-                model=best_match.metadata["model"],
+                model=additional_kwargs.pop("model"),
                 additional_kwargs=additional_kwargs,
             ),
-            best_match.metadata["score"],
+            score,
         )
