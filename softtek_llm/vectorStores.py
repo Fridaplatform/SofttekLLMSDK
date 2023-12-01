@@ -14,9 +14,8 @@ import numpy as np
 import pickle
 import os
 from faiss import (
-    IndexFlatL2,
     IndexFlatIP,
-    IndexScalarQuantizer,
+    normalize_L2,
     write_index,
     read_index,
 )
@@ -218,20 +217,11 @@ class PineconeVectorStore(VectorStore):
 
 
 class FAISSVectorStore(VectorStore):
-    __methods_suported = {
-        "IndexFlatL2": IndexFlatL2,
-        "IndexFlatIP": IndexFlatIP,
-        "IndexScalarQuantizer": IndexScalarQuantizer,
-    }
-
     @override
     def __init__(
         self,
         local_id: Dict[str | None, List[Vector]] = None,
         index: Dict[str | None, Any] = None,
-        method: Literal[
-            "IndexFlatL2", "IndexFlatIP", "IndexScalarQuantizer"
-        ] = "IndexFlatL2",
         d: int = 1536,
     ):
         """
@@ -240,7 +230,6 @@ class FAISSVectorStore(VectorStore):
         Args:
             `local_id` (Dict[str | None, List[Vector], optional): A dictionary with the list of Vector objects of each namespace.
             `index` (Dict[str | None, Any], optional): A dictionary with the FAISS index of each namespace.
-            `method` (Literal['IndexFlatL2', 'IndexFlatIP', 'IndexScalarQuantizer'], optional): The method to be used for the index. The default is 'IndexFlatL2'.
             `d` (int, optional): The dimension of the Vector embeddings to be stored. The default is 1536.
 
         Raises:
@@ -254,9 +243,7 @@ class FAISSVectorStore(VectorStore):
             self.__index: Dict[str | None, Any] = index
         elif local_id is None and index is None:
             self.__local_id: Dict[str | None, List[Vector]] = {None: []}
-            self.__index: Dict[str | None, Any] = {
-                None: self.__methods_suported[method](d)
-            }
+            self.__index: Dict[str | None, Any] = {None: IndexFlatIP(d)}
         else:
             raise ValueError("You must provide both `local_id` and `index` or neither.")
 
@@ -311,13 +298,14 @@ class FAISSVectorStore(VectorStore):
 
         for vector in self.__local_id[namespace]:
             if vector.id == id:
-                embeddings = vector.embeddings
+                embeddings = np.array([vector.embeddings.copy()], dtype=np.float32)
+                normalize_L2(embeddings)
                 break
 
         if embeddings is None:
-            raise ValueError(f"Did not found the id {id}.")
+            raise ValueError(f"Did not found the id {id} in the namespace {namespace}.")
 
-        return np.array([embeddings])
+        return embeddings
 
     def __return_vectors(
         self, ids: List[int], distance: List[float], namespace: str | None
@@ -385,7 +373,6 @@ class FAISSVectorStore(VectorStore):
         self,
         vectors: List[Vector],
         namespace: str | None = None,
-        method: Literal["IndexFlatL2", "IndexFlatIP", "IndexScalarQuantizer"] = None,
     ):
         """
         Adds the given Vector objects to the namespace.
@@ -394,23 +381,14 @@ class FAISSVectorStore(VectorStore):
         Args:
             `vectors` (List[Vector]): The list of Vector objects to be added.
             `namespace` (str | None, optional): The namespace where the Vector objects are going to be added. The dedault is `None`.
-            `method` (Literal['IndexFlatL2', 'IndexFlatIP', 'IndexScalarQuantizer'], optional): The method to be used if the namespace does not exist yet. The default is `IndexFlatL2`.
 
         Raises:
             ValueError: if an id is not unique within the given vectors or within the namespace.
             ValueError: if the dimension (d) of any of the vectors is different to the dimension set in the index.
         """
-        print(vectors)
-
         if namespace not in self.__local_id.keys():
             self.__local_id[namespace] = list()
-
-            if method in self.__methods_suported.keys():
-                self.__index[namespace] = self.__methods_suported[method](
-                    len(vectors[0].embeddings)
-                )
-            if not method:
-                self.__index[namespace] = IndexFlatL2(len(vectors[0].embeddings))
+            self.__index[namespace] = IndexFlatIP(len(vectors[0].embeddings))
 
         ids = [vector.id for vector in self.__local_id[namespace]]
         ids_vector = list()
@@ -427,7 +405,13 @@ class FAISSVectorStore(VectorStore):
                     f"Vectors must be size {self.__index[namespace].d} but got size {len(vector.embeddings)} instead."
                 )
 
-        data_to_add = [vector.embeddings for vector in vectors]
+        data_to_add = list()
+
+        for vector in vectors:
+            vector_to_add = np.array([vector.embeddings.copy()], dtype=np.float32)
+            normalize_L2(vector_to_add)
+
+            data_to_add.append(vector_to_add[0])
 
         self.__index[namespace].add(x=np.array(data_to_add))
 
@@ -504,8 +488,11 @@ class FAISSVectorStore(VectorStore):
 
         if self.__index[namespace].ntotal > 0:
             if vector:
+                vector_to_search = np.array([vector.embeddings.copy()], dtype=np.float32)
+                normalize_L2(vector_to_search)
+
                 D, I = self.__index[namespace].search(
-                    x=np.array([vector.embeddings]), k=top_k
+                    x=vector_to_search, k=top_k
                 )
 
                 vectors = self.__return_vectors(
@@ -595,9 +582,6 @@ class FAISSVectorStore(VectorStore):
         cls,
         namespaces: List[str | None],
         dir_path: str = ".",
-        method: Literal[
-            "IndexFlatL2", "IndexFlatIP", "IndexScalarQuantizer"
-        ] = "IndexFlatL2",
         d: int = 1536,
     ):
         """
@@ -606,7 +590,6 @@ class FAISSVectorStore(VectorStore):
         Args:
             `namespaces` (List[str | None]): The namespaces that will be retrieved.
             `dir_path` (str, optional): The path to which all the files will be retrieved. The default is the current directory.
-            `method` (Literal['IndexFlatL2', 'IndexFlatIP', 'IndexScalarQuantizer'], optional): The method to be used for the index. The default is 'IndexFlatL2'.
             `d` (int, optional): The dimension of the Vector embeddings to be stored. The default is 1536.
 
         Raises:
@@ -651,7 +634,7 @@ class FAISSVectorStore(VectorStore):
 
         if None not in index_.keys():
             index_[None] = []
-            local_id_[None] = cls.__methods_suported[method](d)
+            local_id_[None] = IndexFlatIP(d)
 
         return cls(local_id_, index_)
 

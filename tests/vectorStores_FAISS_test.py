@@ -51,7 +51,7 @@ class TestFAISSVectorStoreInit(unittest.TestCase):
         vectors = self.vector_store.search(vector=self.vector, top_k=3)
 
         # Assert the top_k = 1 to the first vector of vector_1
-        self.assertEqual(vectors, [self.vectors_1[0], self.vectors_2[0], self.vectors_1[1]])
+        self.assertEqual(vectors, [self.vectors_1[2], self.vectors_2[1], self.vectors_1[1]])
 
     def test_save_local_and_load_local(self):
         # Adds vectors
