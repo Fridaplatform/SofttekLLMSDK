@@ -147,16 +147,16 @@ class PineconeVectorStore(VectorStore):
             ValueError: If any of the vectors do not have a unique ID.
         """
         data_to_add = []
-        ids = []
+        ids = {}
         for vector in vectors:
             if not vector.id:
                 raise ValueError("Vector ID cannot be empty when adding to Pinecone.")
-            if vector.id in ids:
+            if ids.get(vector.id, None) is not None:
                 raise ValueError(
                     f"Vector ID {vector.id} is not unique to this batch. Please make sure all vectors have unique IDs."
                 )
             data_to_add.append((vector.id, vector.embeddings, vector.metadata))
-            ids.append(vector.id)
+            ids[vector.id] = 1
 
         self.__index.upsert(
             data_to_add,
@@ -711,16 +711,16 @@ class SofttekVectorStore(VectorStore):
             Exception: If the request fails.
         """
         data_to_add = []
-        ids = []
+        ids = {}
         for vector in vectors:
             if not vector.id:
                 raise ValueError("Vector ID cannot be empty when adding to Pinecone.")
-            if vector.id in ids:
+            if ids.get(vector.id, None) is not None:
                 raise ValueError(
                     f"Vector ID {vector.id} is not unique to this batch. Please make sure all vectors have unique IDs."
                 )
             data_to_add.append((vector.id, vector.embeddings, vector.metadata))
-            ids.append(vector.id)
+            ids[vector.id] = 1
 
         kwargs.update({"vectors": data_to_add, "namespace": namespace})
         response = requests.post(

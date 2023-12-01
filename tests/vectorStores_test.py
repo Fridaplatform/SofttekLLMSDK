@@ -61,7 +61,26 @@ class TestPineconeVectorStoreInit(unittest.TestCase):
             batch_size=None,
             show_progress=True,
         )
-
+    def test_add_duplicate_vectors(self):
+        # Create some sample Vector objects
+        vectors = [
+            Vector(id="1", embeddings=[0.1, 0.2, 0.3], metadata={"name": "vector_1"}),
+            Vector(id="2", embeddings=[0.4, 0.5, 0.6], metadata={"name": "vector_2"}),
+            Vector(id="2", embeddings=[0.7, 0.8, 0.9], metadata={"name": "vector_3"}),
+        ]
+        
+        try:
+            # Call the add method
+            self.vector_store.add(vectors)
+        except ValueError as e:
+            # Assert that the correct exception was raised
+            self.assertTrue(
+                "Vector ID 2 is not unique to this batch" in str(e),
+                "Duplicate error was raised",
+            )
+        else:
+            self.fail("Expected ValueError not raised")
+            
     def test_add_vectors_with_namespace(self):
         # Create some sample Vector objects
         vectors = [
