@@ -1,3 +1,8 @@
+"""
+# Embeddings
+This module contains classes for embeddings models.
+"""
+
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Literal
 
@@ -150,6 +155,9 @@ class SofttekOpenAIEmbeddings(EmbeddingsModel):
 
         Returns:
             `List[float]`: Embedding of the prompt as a list of floats.
+
+        Raises:
+            (Exception): When the API returns a non-200 status code.
         """
         response = requests.post(
             "https://llm-api-stk.azurewebsites.net/embeddings",

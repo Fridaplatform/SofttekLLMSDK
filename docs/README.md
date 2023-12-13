@@ -6,6 +6,7 @@
   - [Notes](#notes)
 - [Modules](#modules)
   - [Models](models.md)
+  - [Embeddings](embeddings.md)
 
 ## Overview
 
@@ -21,3 +22,4 @@ It has an assortment of classes that will help you implement functionality such 
 ## Modules
 
 - [Models](models.md)
+- [Embeddings](embeddings.md)
