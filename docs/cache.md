@@ -42,7 +42,7 @@ This function adds a prompt and response to the cache. It calculates the [`embed
 #### Args
 
 - `prompt` (`str`): The prompt that was sent to the assistant.
-- `response` ([`Response`]()): A [`Response`]() object containing the model's reply, timestamp, latency, and model name.
+- `response` ([`Response`](./schemas/response.md)): A [`Response`](./schemas/response.md) object containing the model's reply, timestamp, latency, and model name.
 
 ```python
 retrieve(
@@ -53,7 +53,7 @@ retrieve(
 ) -> Tuple[Response | None, float]
 ```
 
-This function retrieves the best [`response`]() from a query using the `prompt` provided by the user. It calculates the time taken to retrieve the data and returns the response.
+This function retrieves the best [`response`](./schemas/response.md) from a query using the `prompt` provided by the user. It calculates the time taken to retrieve the data and returns the response.
 
 #### Args
 
@@ -63,4 +63,4 @@ This function retrieves the best [`response`]() from a query using the `prompt` 
 
 #### Returns
 
-- `Tuple[`[`Response`]()` | None, float]`: A tuple containing the [`response`]() and the **score** of the best match.
+- `Tuple[`[`Response`](./schemas/response.md)` | None, float]`: A tuple containing the [`response`](./schemas/response.md) and the **score** of the best match.

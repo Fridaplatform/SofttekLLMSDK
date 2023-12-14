@@ -1,6 +1,6 @@
 # Models
 
-This module contains the `LLMModel` abstract base class and its implementations. These classes are used to create **language models** that can be used by [chatbots]() to generate responses.
+This module contains the `LLMModel` abstract base class and its implementations. These classes are used to create **language models** that can be used by [chatbots](./chatbots/README.md) to generate responses.
 
 ### Index
 
@@ -44,12 +44,12 @@ A method to be overridden that calls the model to generate text.
 
 #### Args
 
-- `memory` (`Memory`): An instance of the [`Memory`]() class containing the conversation history.
+- `memory` ([`Memory`](memory.md)): An instance of the [`Memory`](./memory.md) class containing the conversation history.
 - `description` (`str`, optional): Description of the model. Defaults to `"You are a bot"`.
 
 #### Returns
 
-- [`Response`](): The generated response.
+- [`Response`](./schemas/response.md): The generated response.
 
 #### Raises
 
@@ -69,7 +69,7 @@ Generates a prompt message to check if a given prompt follows a set of filtering
 
 #### Returns
 
-- `List[`[`Message`]()`]`: a list of messages to be used by the chatbot to check if the prompt respects the rules.
+- `List[`[`Message`](./schemas/message.md)`]`: a list of messages to be used by the chatbot to check if the prompt respects the rules.
 
 #### Raises
 
@@ -129,23 +129,23 @@ __call__(
 ) -> Response
 ```
 
-Process a conversation using the `OpenAI` model and return a [`Response`]() object.
+Process a conversation using the `OpenAI` model and return a [`Response`](./schemas/response.md) object.
 
-This function sends a conversation stored in the `memory` parameter to the specified OpenAI model
+This function sends a conversation stored in the [`memory`](memory.md) parameter to the specified OpenAI model
 (`self.model_name`), retrieves a response from the model, and records the conversation in memory.
-It then constructs a [`Response`]() object containing the model's reply.
+It then constructs a [`Response`](./schemas/response.md) object containing the model's reply.
 
 #### Args
 
-- `memory` ([`Memory`]()): An instance of the [`Memory`]() class containing the conversation history.
+- `memory` ([`Memory`](memory.md)): An instance of the [`Memory`](memory.md) class containing the conversation history.
 - `description` (`str`, optional): Description of the model. Defaults to `"You are a bot."`.
 
 #### Returns
 
-- [`Response`](): A [`Response`]() object containing the model's reply, timestamp, latency, and model name.
+- [`Response`](./schemas/response.md): A [`Response`](./schemas/response.md) object containing the model's reply, timestamp, latency, and model name.
 
 #### Raises
-- [`TokensExceeded`](): When the model exceeds the maximum number of tokens allowed.
+- [`TokensExceeded`](exceptions.md): When the model exceeds the maximum number of tokens allowed.
 
 ```python
 parse_filters(
@@ -160,12 +160,12 @@ Generates a prompt message to check if a given prompt follows a set of filtering
 #### Args
 
 - `prompt` (`str`): a string representing the prompt that will be checked against rules.
-- `context` (`List[`[`Message`]()`]`): A list containing the last 3 messages from the chat.
-- `filters` (`List[`[`Filter`]()`]`): List of filters used by the chatbot.
+- `context` (`List[`[`Message`](./schemas/message.md)`]`): A list containing the last 3 messages from the chat.
+- `filters` (`List[`[`Filter`](./schemas/filter.md)`]`): List of filters used by the chatbot.
 
 #### Returns
 
-`List[`[`Message`]()`]`: a list of messages to be used by the chatbot to check if the prompt respects the rules
+`List[`[`Message`](./schemas/message.md)`]`: a list of messages to be used by the chatbot to check if the prompt respects the rules
 
 ## Softtek OpenAI
 
@@ -229,7 +229,7 @@ Conversational interface that interacts with the `SofttekOpenAI` Chat API to gen
 
 #### Args
 
-- `memory` ([`Memory`]()): An instance of the [`Memory`]() class that holds previous conversation messages.
+- `memory` ([`Memory`](./memory.md)): An instance of the [`Memory`](./memory.md) class that holds previous conversation messages.
 - `description` (`str`, optional): A description of the bot. Defaults to `"You are a bot."`.
 - `logging_kwargs` (`Dict`, optional): A dictionary containing the parameters to be logged. Defaults to `{}`.
 
@@ -239,7 +239,7 @@ Conversational interface that interacts with the `SofttekOpenAI` Chat API to gen
 
 #### Returns
 
-- [`Response`](): An instance of the [`Response`]() class that contains the generated response.
+- [`Response`](./schemas/response.md): An instance of the [`Response`](./schemas/response.md) class that contains the generated response.
 
 ```python
 parse_filters(
@@ -254,9 +254,9 @@ Generates a prompt message to check if a given prompt follows a set of filtering
 #### Args
 
 - `prompt` (`str`): a string representing the prompt that will be checked against rules.
-- `context` (`List[`[`Message`]()`]`): A list containing the last 3 messages from the chat.
-- `filters` (`List[`[`Filter`]()`]`): List of filters used by the chatbot.
+- `context` (`List[`[`Message`](./schemas/message.md)`]`): A list containing the last 3 messages from the chat.
+- `filters` (`List[`[`Filter`](./schemas/filter.md)`]`): List of filters used by the chatbot.
 
 #### Returns
 
-- `List[`[`Message`]()`]`: a list of messages to be used by the chatbot to check if the prompt respects the rules.
+- `List[`[`Message`](./schemas/message.md)`]`: a list of messages to be used by the chatbot to check if the prompt respects the rules.

@@ -24,11 +24,11 @@ Memory.from_messages(
 )
 ```
 
-Initializes the `Memory` class from a list of [`messages`]().
+Initializes the `Memory` class from a list of [`messages`](./schemas/message.md).
 
 #### Args
 
-- `messages` (`List[`[`Message`]()`]`): The list of messages to initialize the memory with.
+- `messages` (`List[`[`Message`](./schemas/message.md)`]`): The list of messages to initialize the memory with.
 
 #### Returns
 
@@ -66,7 +66,7 @@ get_message(
 ) -> Message
 ```
 
-Returns a [`message`]() from the memory.
+Returns a [`message`](./schemas/message.md) from the memory.
 
 #### Args
 
@@ -74,7 +74,7 @@ Returns a [`message`]() from the memory.
 
 #### Returns
 
-- [`Message`](): The message at the given index.
+- [`Message`](./schemas/message.md): The message at the given index.
 
 ```python
 get_messages() -> List[Message]
@@ -84,7 +84,7 @@ Returns all the messages from the memory. It is a copy of the original list of m
 
 #### Returns
 
-- `List[`[`Message`]()`]`: A copy of the list of messages.
+- `List[`[`Message`](./schemas/message.md)`]`: A copy of the list of messages.
 
 ```python
 clear_messages()
@@ -130,11 +130,11 @@ WindowMemory.from_messages(
 )
 ```
 
-Initializes the `WindowMemory` class from a list of [`messages`]().
+Initializes the `WindowMemory` class from a list of [`messages`](./schemas/message.md).
 
 #### Args
 
-- `messages` (`List[`[`Message`]()`]`): The list of messages to initialize the memory with.
+- `messages` (`List[`[`Message`](./schemas/message.md)`]`): The list of messages to initialize the memory with.
 - `window_size` (`int`): The maximum number of messages to store in the memory.
 
 #### Returns
@@ -172,7 +172,7 @@ get_message(
 ) -> Message
 ```
 
-Returns a [`message`]() from the memory.
+Returns a [`message`](./schemas/message.md) from the memory.
 
 #### Args
 
@@ -190,7 +190,7 @@ Returns all the messages from the memory. It is a copy of the original list of m
 
 #### Returns
 
-- `List[`[`Message`]()`]`: A copy of the list of messages.
+- `List[`[`Message`](./schemas/message.md)`]`: A copy of the list of messages.
 
 ```python
 clear_messages()

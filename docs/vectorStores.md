@@ -31,7 +31,7 @@ Abstract method for adding the given vectors to the vectorstore.
 
 #### Args
 
-- `vectors` (`List[`[`Vector`]()`]`): A List of [`Vector`]() instances to add.
+- `vectors` (`List[`[`Vector`](./schemas/vector.md)`]`): A List of [`Vector`](./schemas/vector.md) instances to add.
 - `**kwargs` (`Any`): Additional arguments.
 
 #### Raises
@@ -49,7 +49,7 @@ Abstract method for deleting vectors from the `VectorStore` given a list of vect
 
 #### Args
 
-- `ids` (`List[str]`): A List of [`Vector`]() IDs to delete.
+- `ids` (`List[str]`): A List of [`Vector`](./schemas/vector.md) IDs to delete.
 - `**kwargs` (`Any`): Additional arguments.
 
 #### Raises
@@ -68,7 +68,7 @@ Abstract method for searching vectors that match the specified criteria.
 
 #### Args
 
-- `vector` ([`Vector`]()` | None`, optional): The vector to use as a reference for the search. Defaults to `None`.
+- `vector` ([`Vector`](./schemas/vector.md)` | None`, optional): The vector to use as a reference for the search. Defaults to `None`.
 - `top_k` (`int`, optional): The number of results to return for each query. Defaults to `1`.
 - `**kwargs` (`Any`): Additional keyword arguments to customize the search criteria.
 
@@ -116,7 +116,7 @@ Add vectors to the index.
 
 Args:
 
-- `vectors` (`List[`[`Vector`]()`]`): A list of [`Vector`]() objects to add to the index. Note that each vector must have a unique ID.
+- `vectors` (`List[`[`Vector`](./schemas/vector.md)`]`): A list of [`Vector`](./schemas/vector.md) objects to add to the index. Note that each vector must have a unique ID.
 - `namespace` (`str | None`, optional): The namespace to write to. If not specified, the **default namespace** is used. Defaults to `None`.
 - `batch_size` (`int | None`, optional): The number of vectors to upsert in each batch. If not specified, all vectors will be upserted in a single batch. Defaults to `None`.
 - `show_progress` (`bool`, optional): Whether to show a progress bar using `tqdm`. Applied only if `batch_size` is provided. Defaults to `True`.
@@ -161,7 +161,7 @@ Search for vectors in the index.
 
 #### Args
 
-- `vector` ([`Vector`]()` | None`, optional): The query vector. Each call can contain only one of the parameters `id` or `vector`. Defaults to `None`.
+- `vector` ([`Vector`](./schemas/vector.md)` | None`, optional): The query vector. Each call can contain only one of the parameters `id` or `vector`. Defaults to `None`.
 - `id` (`str | None`, optional): The unique ID of the vector to be used as a query vector. Each call can contain only one of the parameters `id` or `vector`. Defaults to `None`.
 - `top_k` (`int`, optional): The number of results to return for each query. Defaults to `1`.
 - `namespace` (`str | None`, optional): The namespace to fetch vectors from. If not specified, **the default namespace is used**. Defaults to `None`.
@@ -170,7 +170,7 @@ Search for vectors in the index.
 
 #### Returns
 
-- `List[`[`Vector`]()`]`: A list of [`Vector`]() objects containing the search results.
+- `List[`[`Vector`](./schemas/vector.md)`]`: A list of [`Vector`](./schemas/vector.md) objects containing the search results.
 
 ## FAISS Vector Store
 
@@ -186,9 +186,9 @@ Class for managing vectors in a FAISS index. Inherits from [`VectorStore`](#vect
 
 #### Args
 
-- `local_id` (`Dict[str | None, List[`[`Vector`]()`]]`, optional): A dictionary with the list of [`Vector`]() objects of each namespace.
+- `local_id` (`Dict[str | None, List[`[`Vector`](./schemas/vector.md)`]]`, optional): A dictionary with the list of [`Vector`](./schemas/vector.md) objects of each namespace.
 - `index` (`Dict[str | None, Any]`, optional): A dictionary with the FAISS index of each namespace.
-- `d` (`int`, optional): The dimension of the Vector embeddings to be stored. Must coincide with the embeddings model used. The default is `1536`.
+- `d` (`int`, optional): The dimension of the Vector embeddings to be stored. Must coincide with the [embeddings model](./embeddings.md) used. The default is `1536`.
 
 #### Raises
 
@@ -200,7 +200,7 @@ Class for managing vectors in a FAISS index. Inherits from [`VectorStore`](#vect
 
 ### Properties
 
-- `local_id`: A dictionary with the list of [`Vector`]() objects of each namespace.
+- `local_id`: A dictionary with the list of [`Vector`](./schemas/vector.md) objects of each namespace.
 - `index`: A dictionary with the index of each namespace.
 
 ### Methods
@@ -212,14 +212,14 @@ add(
 )
 ```
 
-Adds the given [`Vector`]() objects to the namespace.
+Adds the given [`Vector`](./schemas/vector.md) objects to the namespace.
 
 If the namespace does not exist, it is created with the given method. If no method is provided, `IndexFlatIP` is used.
 
 #### Args
 
-- `vectors` (`List[`[`Vector`]()`]`): The list of [`Vector`]() objects to be added.
-- `namespace` (`str | None`, optional): The namespace where the [`Vector`]() objects are going to be added. The default is `None`.
+- `vectors` (`List[`[`Vector`](./schemas/vector.md)`]`): The list of [`Vector`](./schemas/vector.md) objects to be added.
+- `namespace` (`str | None`, optional): The namespace where the [`Vector`](./schemas/vector.md) objects are going to be added. The default is `None`.
 
 #### Raises
 
@@ -234,13 +234,13 @@ delete(
 )
 ```
 
-Deletes the given [`Vector`]() objects or all the Vector objects of the given namespace.
+Deletes the given [`Vector`](./schemas/vector.md) objects or all the Vector objects of the given namespace.
 
 #### Args
 
-- `ids` (`List[str] | None`, optional): The list of [`Vector`]() objects to be deleted from the given namespace. The default is `None`.
-- `delete_all` (`bool`, optional): If set to `True`, all the [`Vector`]() objects will be deleted from the given namespace. The default is `False`.
-- `namespace` (`str | None`, optional): The namespace where the [`Vector`]() objects are going to be deleted from. The default is `None`.
+- `ids` (`List[str] | None`, optional): The list of [`Vector`](./schemas/vector.md) objects to be deleted from the given namespace. The default is `None`.
+- `delete_all` (`bool`, optional): If set to `True`, all the [`Vector`](./schemas/vector.md) objects will be deleted from the given namespace. The default is `False`.
+- `namespace` (`str | None`, optional): The namespace where the [`Vector`](./schemas/vector.md) objects are going to be deleted from. The default is `None`.
 
 #### Raises
 
@@ -261,18 +261,18 @@ search(
 ) -> List[Vector]
 ```
 
-Searches for the `top_k` closest [`Vector`]() objects to the given Vector object or `id`.
+Searches for the `top_k` closest [`Vector`](./schemas/vector.md) objects to the given Vector object or `id`.
 
 #### Args
 
-- `vector` ([`Vector`]()` | None`, optional): The [`Vector`]() object to be compared to. The default is `None`.
-- `id` (`str | None`, optional): The id of the [`Vector`]() object to be compared to. The default is `None`.
-- `top_k` (`int`, optional): The number of top [`Vector`]() objects to be returned. The default is `1`.
+- `vector` ([`Vector`](./schemas/vector.md)` | None`, optional): The [`Vector`](./schemas/vector.md) object to be compared to. The default is `None`.
+- `id` (`str | None`, optional): The id of the [`Vector`](./schemas/vector.md) object to be compared to. The default is `None`.
+- `top_k` (`int`, optional): The number of top [`Vector`](./schemas/vector.md) objects to be returned. The default is `1`.
 - `namespace` (`str | None`, optional): The namespace of the index that is going to be used. The default is `None`.
 
 #### Returns
 
-- `List[`[`Vector`]()`]`: The list of top [`Vector`]() objects.
+- `List[`[`Vector`](./schemas/vector.md)`]`: The list of top [`Vector`](./schemas/vector.md) objects.
 
 #### Raises
 
@@ -325,7 +325,7 @@ Creates a `FAISSVectorStore` from a list of `namespaces` stored in the `dir_path
 
 - `namespaces` (`List[str | None]`): The namespaces that will be retrieved.
 - `dir_path` (`str`, optional): The path to which all the files will be retrieved. The default is the current directory.
-- `d` (`int`, optional): The dimension of the [`Vector`]() embeddings to be stored. Must coincide with the embeddings model used. The default is `1536`.
+- `d` (`int`, optional): The dimension of the [`Vector`](./schemas/vector.md) embeddings to be stored. Must coincide with the [embeddings model](./embeddings.md) used. The default is `1536`.
 
 #### Raises
 
@@ -370,7 +370,7 @@ Add vectors to the index.
 
 #### Args
 
-- `vectors` (`List[`[`Vector`]()`]`): A list of [`Vector`]() objects to add to the index. Note that **each vector must have a unique ID**.
+- `vectors` (`List[`[`Vector`](./schemas/vector.md)`]`): A list of [`Vector`](./schemas/vector.md) objects to add to the index. Note that **each vector must have a unique ID**.
 - `namespace` (`str | None`, optional): The namespace to write to. If not specified, **the default namespace is used**. Defaults to `None`.
 
 #### Raises
@@ -417,7 +417,7 @@ Search for vectors in the index.
 
 #### Args
 
-- `vector` ([`Vector`]()` | None`, optional): The query vector. Each call can contain only one of the parameters `id` or `vector`. Defaults to `None`.
+- `vector` ([`Vector`](./schemas/vector.md)` | None`, optional): The query vector. Each call can contain only one of the parameters `id` or `vector`. Defaults to `None`.
 - `id` (`str | None`, optional): The unique ID of the vector to be used as a query vector. Each call can contain only one of the parameters `id` or `vector`. Defaults to `None`.
 - `top_k` (`int`, optional): The number of results to return for each query. Defaults to `1`.
 - `namespace` (`str | None`, optional): The namespace to fetch vectors from. If not specified, **the default namespace is used**. Defaults to `None`.
@@ -429,7 +429,7 @@ Search for vectors in the index.
 
 #### Returns
 
-- `List[`[`Vector`]()`]`: A list of [`Vector`]() objects containing the search results.
+- `List[`[`Vector`](./schemas/vector.md)`]`: A list of [`Vector`](./schemas/vector.md) objects containing the search results.
 
 ## Supabase Vector Store
 
@@ -464,7 +464,7 @@ Add vectors to the index.
 
 #### Args
 
-- `vectors` (`List[`[`Vector`]()`]`): A list of [`Vector`]() objects to add to the index. **Note that each vector must have a unique ID**.
+- `vectors` (`List[`[`Vector`](./schemas/vector.md)`]`): A list of [`Vector`](./schemas/vector.md) objects to add to the index. **Note that each vector must have a unique ID**.
 
 #### Raises
 
@@ -472,7 +472,7 @@ Add vectors to the index.
 
 #### Note
 
-- Requires a table with columns: `id` (text), `vector` (vector(1536 or dimension of embeddings model used)), `metadata` (json), `created_at` (timestamp).
+- Requires a table with columns: `id` (text), `vector` (vector(1536 or dimension of [embeddings model](./embeddings.md) used)), `metadata` (json), `created_at` (timestamp).
 - **Vector type is enabled with the vector extension for postgres in supabase**.
 - Requires default value of `id` to `gen_random_uuid()`.
 
@@ -501,12 +501,12 @@ Search for vectors in the index.
 
 #### Args
 
-- `vector` ([`Vector`]()` | None`, optional): The query [`vector`](). Defaults to `None`.
+- `vector` ([`Vector`](./schemas/vector.md)` | None`, optional): The query [`vector`](./schemas/vector.md). Defaults to `None`.
 - `top_k` (`int`, optional): the number of vectors to retrieve
 
 #### Returns
 
-- `List[`[`Vector`]()`]`: A list of [`Vector`]() objects containing the search results.
+- `List[`[`Vector`](./schemas/vector.md)`]`: A list of [`Vector`](./schemas/vector.md) objects containing the search results.
 
 #### Note
 

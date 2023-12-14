@@ -1,3 +1,8 @@
+"""
+# Schemas
+This module contains a set of useful `BaseModel`s for commonly used data structures/objects.
+"""
+
 from typing import Dict, List, Literal, Optional
 
 from pydantic import BaseModel

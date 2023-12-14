@@ -14,6 +14,14 @@
     - [Chatbot](chatbots/chatbot.md)
     - [Document Chatbot](chatbots/documentChatbot.md)
   - [Exceptions](exceptions.md)
+  - [Schemas](schemas/README.md)
+    - [Message](schemas/message.md)
+    - [Usage](schemas/usage.md)
+    - [Response](schemas/response.md)
+    - [Filter](schemas/filter.md)
+    - [OpenAI Chat Choice](schemas/openAIChatChoice.md)
+    - [OpenAI Chat Response](schemas/openAIChatResponse.md)
+    - [Vector](schemas/vector.md)
 
 ## Overview
 
@@ -26,6 +34,8 @@ It has an assortment of classes that will help you implement functionality such 
 - This package was built using **Python** version `3.10.11`. We strongly recommend using the same version within your virtual environment.
 - The current version of the package is still under development (it’s in its Alpha stage), so a few features may seem somewhat limited. However, inheriting from the base classes and expanding on the current functionality is highly encouraged.
 
+**We highly recommend to start with the [Chatbots](./chatbots/README.md) section, as it is the heart of the package.**
+
 ## Modules
 
 - [Models](models.md)
@@ -37,3 +47,11 @@ It has an assortment of classes that will help you implement functionality such 
   - [Chatbot](chatbots/chatbot.md)
   - [Document Chatbot](chatbots/documentChatbot.md)
 - [Exceptions](exceptions.md)
+- [Schemas](schemas/README.md)
+  - [Message](schemas/message.md)
+  - [Usage](schemas/usage.md)
+  - [Response](schemas/response.md)
+  - [Filter](schemas/filter.md)
+  - [OpenAI Chat Choice](schemas/openAIChatChoice.md)
+  - [OpenAI Chat Response](schemas/openAIChatResponse.md)
+  - [Vector](schemas/vector.md)

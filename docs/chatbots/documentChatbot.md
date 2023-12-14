@@ -28,13 +28,13 @@ A chatbot that uses a knowledge base to answer questions. The knowledge base is 
 
 #### Args
 
-- `model` ([`LLMModel`](../models.md)): The LLM to use for generating the [`response`]().
+- `model` ([`LLMModel`](../models.md)): The LLM to use for generating the [`response`](../schemas/response.md).
 - `knowledge_base` ([`VectorStore`](../vectorStores.md)): The vector store that contains the documents.
 - `embeddings_model` ([`EmbeddingsModel`](../embeddings.md)): The embeddings model to use for embedding the documents and the prompt.
 - `description` (`str`, optional): Information about the bot. Defaults to `"You are a helpful research assistant. You have acess to documents and always respond using the most relevant information."`.
 - `memory` ([`Memory`](../memory.md), optional): The memory to use. Defaults to [`WindowMemory`](../memory.md)`(window_size=10)`.
-- `non_valid_response` (`str | None`, optional): [`Response`]() given when the prompt does not follow the rules set by the `filters`. Defaults to `None`. If `None`, an [`InvalidPrompt`]() exception is raised when the prompt does not follow the rules set by the `filters`.
-- `filters` (`List[`[`Filter`]()`] | None`, optional): List of filters used by the chatbot. Defaults to `None`.
+- `non_valid_response` (`str | None`, optional): [`Response`](../schemas/response.md) given when the prompt does not follow the rules set by the [`filters`](../schemas/filter.md). Defaults to `None`. If `None`, an [`InvalidPrompt`](../exceptions.md) exception is raised when the prompt does not follow the rules set by the `filters`.
+- `filters` (`List[`[`Filter`](../schemas/filter.md)`] | None`, optional): List of filters used by the chatbot. Defaults to `None`.
 - `cache` ([`Cache`](../cache.md)` | None`, optional): Cache used by the chatbot. Defaults to `None`.
 - `cache_probability` (`float`, optional): Probability of using the [`cache`](../cache.md). Defaults to `0.5`. If `1.0`, the cache is **always used**. If `0.0`, the cache is **never used**.
 - `verbose` (`bool`, optional): Whether to print additional information. Defaults to `False`.
@@ -45,7 +45,7 @@ A chatbot that uses a knowledge base to answer questions. The knowledge base is 
 - `model`: The [model](../models.md) used by the chatbot.
 - `memory`: The [memory](../memory.md) used by the chatbot.
 - `description`: Information about the chatbot.
-- `filters`: The [filters]() used by the chatbot.
+- `filters`: The [filters](../schemas/filter.md) used by the chatbot.
 - `cache`: The [cache](../cache.md) used by the chatbot.
 - `cache_probability`: The probability of using the [cache](../cache.md).
 - `verbose`: Whether to print additional information.
@@ -66,24 +66,24 @@ chat(
 ) -> Response
 ```
 
-Chatbot function that returns a [response]() given a `prompt`. If a [memory](../memory.md) and/or [cache](../cache.md) are available, it considers **previously stored conversations**. [`Filters`]() are applied to the `prompt` before processing to ensure it is valid.
+Chatbot function that returns a [response](../schemas/response.md) given a `prompt`. If a [memory](../memory.md) and/or [cache](../cache.md) are available, it considers **previously stored conversations**. [`Filters`](../schemas/filter.md) are applied to the `prompt` before processing to ensure it is valid.
 
 #### Args
 
 - `prompt` (`str`): User's input string text.
 - `print_cache_score` (`bool`, optional): Whether to print the [cache](../cache.md) score. Defaults to `False`.
-- `include_context` (`bool`, optional): Whether to include the context in the [response](). Defaults to `False`.
+- `include_context` (`bool`, optional): Whether to include the context in the [response](../schemas/response.md). Defaults to `False`.
 - `top_documents` (`int`, optional): The number of documents to consider. Defaults to `5`.
 - `cache_kwargs` (`Dict`, optional): Additional keyword arguments to be passed to the [cache](../cache.md). Defaults to `{}`.
 - `logging_kwargs` (`Dict`, optional): additional keyword arguments to be passed to the logging function. **Can only be used with certain [models](../models.md)**. Defaults to `None`.
 
 #### Raises
 
-- [`InvalidPrompt`](): If the `prompt` does not follow the rules set by the [filters]() and **`non_valid_response` is `None`**.
+- [`InvalidPrompt`](../exceptions.md): If the `prompt` does not follow the rules set by the [filters](../schemas/filter.md) and **`non_valid_response` is `None`**.
 
 #### Returns
 
-- [`Response`](): The response given by the chatbot. Whithin the `additional_kwargs`, the following keys are available: `sources` (always), `context` (if `include_context` is `True`).
+- [`Response`](../schemas/response.md): The response given by the chatbot. Whithin the `additional_kwargs`, the following keys are available: `sources` (always), `context` (if `include_context` is `True`).
 
 ```python
 add_document(
