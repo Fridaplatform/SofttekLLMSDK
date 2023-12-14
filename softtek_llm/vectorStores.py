@@ -1,25 +1,23 @@
-import ast
+"""
+# Vector Stores
+Classes for managing vectors in a vector store.
+"""
+
+import os
+import pickle
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, Dict, List
 
+import numpy as np
 import pinecone
 import requests
+from faiss import IndexFlatIP, normalize_L2, read_index, write_index
 from pinecone.core.client.configuration import Configuration as OpenApiConfiguration
 from supabase import create_client
 from typing_extensions import override
 
 from softtek_llm.schemas import Vector
-
-import numpy as np
-import pickle
-import os
-from faiss import (
-    IndexFlatIP,
-    normalize_L2,
-    write_index,
-    read_index,
-)
-from pathlib import Path
 
 
 class VectorStore(ABC):
@@ -73,7 +71,7 @@ class VectorStore(ABC):
         Abstract method for searching vectors that match the specified criteria.
 
         Args:
-            `vector` (Vector, optional): The vector to use as a reference for the search. Defaults to None.
+            `vector` (Vector | None, optional): The vector to use as a reference for the search. Defaults to `None`.
             `top_k` (int, optional): The number of results to return for each query. Defaults to 1.
             `**kwargs` (Any): Additional keyword arguments to customize the search criteria.
 
@@ -86,7 +84,7 @@ class VectorStore(ABC):
 class PineconeVectorStore(VectorStore):
     """
     # Pinecone Vector Store
-    Class for managing vectors in a Pinecone index.
+    Class for managing vectors in a Pinecone index. Inherits from VectorStore.
 
     ## Attributes
     - `api_key` (str): The API key for authentication with the Pinecone service.
@@ -206,7 +204,6 @@ class PineconeVectorStore(VectorStore):
             `top_k` (int, optional): The number of results to return for each query. Defaults to 1.
             `namespace` (str | None, optional): The namespace to fetch vectors from. If not specified, the default namespace is used. Defaults to None.
             `filter` (Dict | None, optional): The filter to apply. You can use vector metadata to limit your search. Defaults to None.
-            `include_metadata` (bool, optional): Indicates whether metadata is included in the response as well as the ids. If omitted the server will use the default value of False. Defaults to None.
             `**kwargs` (Any): Additional arguments.
 
         Returns:
@@ -242,6 +239,26 @@ class PineconeVectorStore(VectorStore):
 
 
 class FAISSVectorStore(VectorStore):
+    """
+    # FAISS Vector Store
+    Class for managing vectors in a FAISS index. Inherits from VectorStore.
+
+    ## Attributes
+    - `local_id` (Dict[str | None, List[Vector]]): A dictionary with the list of Vector objects of each namespace.
+    - `index` (Dict[str | None, Any]): A dictionary with the FAISS index of each namespace.
+
+    ## Methods
+    - `__return_ids(ids: List[str], namespace: str | None) -> np.array`: Creates a Numpy array with the positional ids of the given Vectors ids.
+    - `__return_embeddings(id: str, namespace: str | None) -> np.array`: Creates a Numpy array with the embeddings of the given Vector id.
+    - `__return_vectors(ids: List[int], distance: List[float], namespace: str | None) -> List[Vector]`: Updates the score in the metadata of each Vector object, and creates a list of Vector objects given their positional ids.
+    - `__remove_ids(ids: List[str], namespace: str | None)`: Removes the given Vector objects from the `local_id` list.
+    - `add(vectors: List[Vector], namespace: str | None = None)`: Add vectors to the index.
+    - `delete(ids: List[str] | None = None, delete_all: bool | None = None, namespace: str | None = None)`: Delete vectors from the index.
+    - `search(vector: Vector | None = None, id: str | None = None, top_k: int = 1, namespace: str | None = None) -> List[Vector]`: Search for vectors in the index.
+    - `save_local(dir_path: str = ".", namespace: str | None = None, save_all: bool = False)`: Save the index and the local_id objects from the given namespace or from all the namespaces.
+    - `load_local(namespaces: List[str | None], dir_path: str = ".", d: int = 1536)`: Load the index and the local_id objects from the given namespace or from all the namespaces.
+    """
+
     @override
     def __init__(
         self,
@@ -253,9 +270,9 @@ class FAISSVectorStore(VectorStore):
         Initialize a FAISSVectorStore object to manage vectors in a FAISS index.
 
         Args:
-            `local_id` (Dict[str | None, List[Vector], optional): A dictionary with the list of Vector objects of each namespace.
+            `local_id` (Dict[str | None, List[Vector]], optional): A dictionary with the list of Vector objects of each namespace.
             `index` (Dict[str | None, Any], optional): A dictionary with the FAISS index of each namespace.
-            `d` (int, optional): The dimension of the Vector embeddings to be stored. The default is 1536.
+            `d` (int, optional): The dimension of the Vector embeddings to be stored. Must coincide with the embeddings model used. The default is 1536.
 
         Raises:
             ValueError: If the user provides only one of the arguments.
@@ -401,11 +418,11 @@ class FAISSVectorStore(VectorStore):
     ):
         """
         Adds the given Vector objects to the namespace.
-        If the namespace does not exist, it is created with the given method. If not method is provided, `IndexFlatL2` is used.
+        If the namespace does not exist, it is created with the given method. If no method is provided, `IndexFlatIP` is used.
 
         Args:
             `vectors` (List[Vector]): The list of Vector objects to be added.
-            `namespace` (str | None, optional): The namespace where the Vector objects are going to be added. The dedault is `None`.
+            `namespace` (str | None, optional): The namespace where the Vector objects are going to be added. The default is `None`.
 
         Raises:
             ValueError: if an id is not unique within the given vectors or within the namespace.
@@ -445,7 +462,7 @@ class FAISSVectorStore(VectorStore):
     @override
     def delete(
         self,
-        ids: List[str] = None,
+        ids: List[str] | None = None,
         delete_all: bool = False,
         namespace: str | None = None,
     ):
@@ -453,9 +470,9 @@ class FAISSVectorStore(VectorStore):
         Deletes the given Vector objects or all the Vector objects of the given namespace.
 
         Args:
-            `ids` (List[str], optional): The list of Vector objects to be deleted from the given namespace.
-            `delete_all` (bool, optional): If set `True`, all the Vector objects will be deleted from the given namespace.
-            `namespace` (str | None, optional): The namespace where the Vector objects are going to be deleted from. The dedault is `None`.
+            `ids` (List[str] | None, optional): The list of Vector objects to be deleted from the given namespace. The default is `None`.
+            `delete_all` (bool, optional): If set to `True`, all the Vector objects will be deleted from the given namespace. The default is `False`.
+            `namespace` (str | None, optional): The namespace where the Vector objects are going to be deleted from. The default is `None`.
 
         Raises:
             ValueError: if the namespace does not exist.
@@ -480,8 +497,8 @@ class FAISSVectorStore(VectorStore):
     @override
     def search(
         self,
-        vector: Vector = None,
-        id: str = None,
+        vector: Vector | None = None,
+        id: str | None = None,
         top_k: int = 1,
         namespace: str | None = None,
         **kwargs,
@@ -490,10 +507,10 @@ class FAISSVectorStore(VectorStore):
         Searches for the top `top_k` closest Vector objects to the given Vector object or id.
 
         Args:
-            `vector` (Vector, optional): The Vector object to be compared to.
-            `id` (str, optional): The id of the Vector object to be compared to.
-            `top_k` (int, optional): The number of top Vector objects to be returned.
-            `namespace` (str | None, optional): The namespace of the index that is going to be used. The dedault is `None`.
+            `vector` (Vector | None, optional): The Vector object to be compared to. The default is `None`.
+            `id` (str | None, optional): The id of the Vector object to be compared to. The default is `None`.
+            `top_k` (int, optional): The number of top Vector objects to be returned. The default is 1.
+            `namespace` (str | None, optional): The namespace of the index that is going to be used. The default is `None`.
 
         Returns:
             `vectors`(List[Vector]): The list of top Vector objects.
@@ -513,12 +530,12 @@ class FAISSVectorStore(VectorStore):
 
         if self.__index[namespace].ntotal > 0:
             if vector:
-                vector_to_search = np.array([vector.embeddings.copy()], dtype=np.float32)
+                vector_to_search = np.array(
+                    [vector.embeddings.copy()], dtype=np.float32
+                )
                 normalize_L2(vector_to_search)
 
-                D, I = self.__index[namespace].search(
-                    x=vector_to_search, k=top_k
-                )
+                D, I = self.__index[namespace].search(x=vector_to_search, k=top_k)
 
                 vectors = self.__return_vectors(
                     ids=I.tolist()[0], distance=D.tolist()[0], namespace=namespace
@@ -546,13 +563,13 @@ class FAISSVectorStore(VectorStore):
     ):
         """
         Saves both the index and the local_id objects from the given namespace or from all the namespaces.
-        If not `folder_path` is provided, it is stored in the current directory.
+        If `folder_path` is not provided, it is stored in the current directory.
         If the folder does not exist, it is created.
 
         Args:
             `dir_path` (str, optional): The path to which all the files will be saved. The default is the current directory.
-            `namespace` (str | None, optional): The namespace the will be saved. The dedault is `None`.
-            `save_all` (bool, optional): If set `True`, all the namespaces will be saved.
+            `namespace` (str | None, optional): The namespace that will be saved. The default is `None`.
+            `save_all` (bool, optional): If set to `True`, all the namespaces will be saved. The default is `False`.
 
         Raises:
             ValueError: if the namespace does not exist.
@@ -615,7 +632,7 @@ class FAISSVectorStore(VectorStore):
         Args:
             `namespaces` (List[str | None]): The namespaces that will be retrieved.
             `dir_path` (str, optional): The path to which all the files will be retrieved. The default is the current directory.
-            `d` (int, optional): The dimension of the Vector embeddings to be stored. The default is 1536.
+            `d` (int, optional): The dimension of the Vector embeddings to be stored. Must coincide with the embeddings model used. The default is 1536.
 
         Raises:
             ValueError: if the given directory does not exist.
@@ -667,7 +684,7 @@ class FAISSVectorStore(VectorStore):
 class SofttekVectorStore(VectorStore):
     """
     # Softtek Vector Store
-    Class for managing vectors in a Softtek index.
+    Class for managing vectors in a Softtek index. Inherits from VectorStore.
 
     ## Attributes
     - `api_key` (str): The API key for authentication with the Softtek service.
@@ -682,7 +699,7 @@ class SofttekVectorStore(VectorStore):
         """Initialize a SofttekVectorStore object for managing vectors in a Softtek index.
 
         Args:
-            api_key (str): The API key for authentication with the Softtek service.
+            api_key (str): The API key for authentication with the LLMOPs service.
         """
         super().__init__()
         self.__api_key = api_key
@@ -836,7 +853,7 @@ class SofttekVectorStore(VectorStore):
 class SupabaseVectorStore(VectorStore):
     """
     # Supabase Vector Store
-    Class for managing vectors in a Supabase table.
+    Class for managing vectors in a Supabase table. Inherits from VectorStore.
 
     ## Attributes
     - `api_key` (str): The API key for authentication with the Supabase service.
@@ -851,20 +868,30 @@ class SupabaseVectorStore(VectorStore):
 
     @override
     def __init__(self, api_key: str, url: str, index_name: str):
-        """
-        Initialize a SupabaseVectorStore object for managing vectors in a Supabase table.
+        """Initialize a SupabaseVectorStore object for managing vectors in a Supabase table.
+
+        Args:
+            api_key (str): The API key for authentication with the Supabase service.
+            url (str): The Supabase URL.
+            index_name (str): The name of the table where vectors will be stored and retrieved.
         """
         self.__client = create_client(url, api_key)
         self.__index_name = index_name
 
     @override
     def add(self, vectors: List[Vector], **kwargs: Any):
-        """
-        Add vectors to the index.
-        -- Requires a table with columns: id (text), vector (vector(1536)), metadata (json), created_at (timestamp)
-        -- vector type is enabled with the vector extension for postgres in supabase
-        -- requires default value of id to gen_random_uuid()
+        """Add vectors to the index.
 
+        Args:
+            vectors (List[Vector]): A list of Vector objects to add to the index. Note that each vector must have a unique ID.
+
+        Raises:
+            ValueError: If any of the vectors do not have embeddings.
+
+        Note:
+            - Requires a table with columns: `id` (text), `vector` (vector(1536 or dimension of embeddings model used)), `metadata` (json), `created_at` (timestamp).
+            - **Vector type is enabled with the vector extension for postgres in supabase**.
+            - Requires default value of `id` to `gen_random_uuid()`.
         """
         for vector in vectors:
             # if not vector.id:
@@ -891,19 +918,21 @@ class SupabaseVectorStore(VectorStore):
 
     @override
     def search(
-        self, vector: Vector | None = None, limit: int = 1, **kwargs: Any
+        self, vector: Vector | None = None, top_k: int = 1, **kwargs: Any
     ) -> List[Vector]:
         """
         Search for vectors in the index.
 
         Args:
-            vector (Vector | None, optional): The query vector. Each call can contain only one of the parameters `id` or `vector`. Defaults to None.
-            limit (int, optional): the number of vectors to retrieve
+            vector (Vector | None, optional): The query vector. Defaults to None.
+            top_k (int, optional): the number of vectors to retrieve
 
         Returns:
             List[Vector]: A list of Vector objects containing the search results.
 
         -- Requires the following procedure (where you only change the value of the TABLENAME variable):
+
+        ```sql
         drop function if exists similarity_search_TABLENAME (embedding vector (1536), match_count bigint);
 
         create or replace function similarity_search_TABLENAME(embedding vector(1536), match_count bigint)
@@ -922,10 +951,11 @@ class SupabaseVectorStore(VectorStore):
             limit match_count;
         end;
         $$;
+        ```
         """
         query_response = self.__client.rpc(
             "similarity_search_" + self.__index_name,
-            {"embedding": vector.embeddings, "match_count": limit},
+            {"embedding": vector.embeddings, "match_count": top_k},
         ).execute()
         vectors = []
         print(query_response.data)

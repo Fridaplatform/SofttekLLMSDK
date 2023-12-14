@@ -8,6 +8,7 @@
   - [Models](models.md)
   - [Embeddings](embeddings.md)
   - [Memory](memory.md)
+  - [Vector Stores](vectorStores.md)
 
 ## Overview
 
@@ -25,3 +26,4 @@ It has an assortment of classes that will help you implement functionality such 
 - [Models](models.md)
 - [Embeddings](embeddings.md)
 - [Memory](memory.md)
+- [Vector Stores](vectorStores.md)
