@@ -1,3 +1,8 @@
+"""
+# Exceptions
+This module contains the exceptions raised by the program.
+"""
+
 class InvalidPrompt(Exception):
     """Raised when the prompt is invalid."""
 

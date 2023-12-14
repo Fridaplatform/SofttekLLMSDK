@@ -1,3 +1,8 @@
+"""
+# Memory
+Represents the memory of the assistant. Stores all the messages that have been exchanged between the user and the assistant.
+"""
+
 from typing import Dict, List, Literal
 
 from typing_extensions import override
@@ -92,7 +97,7 @@ class Memory:
 class WindowMemory(Memory):
     """
     # Window Memory
-    Represents the memory of the assistant. Stores all the messages that have been exchanged between the user and the assistant. It has a maximum size.
+    Represents the memory of the assistant. Stores all the messages that have been exchanged between the user and the assistant. It has a maximum size. It extends the Memory class.
 
     ## Attributes
     - `window_size` (int): The maximum number of messages to store in the memory.
@@ -131,14 +136,14 @@ class WindowMemory(Memory):
     @classmethod
     @override
     def from_messages(cls, messages: List[Message], window_size: int):
-        """Initializes the Memory class from a list of messages.
+        """Initializes the WindowMemory class from a list of messages.
 
         Args:
             `messages` (List[Message]): The list of messages to initialize the memory with.
             `window_size` (int): The maximum number of messages to store in the memory.
 
         Returns:
-            (Memory): The initialized memory.
+            (WindowMemory): The initialized memory.
         """
         memory = cls(window_size)
         for message in messages:
@@ -149,7 +154,7 @@ class WindowMemory(Memory):
     def add_message(
         self, role: Literal["system", "user", "assistant", "function"], content: str
     ):
-        """Adds a message to the memory.
+        """Adds a message to the memory. If the memory is full, the oldest message will be deleted.
 
         Args:
             `role` (Literal["system", "user", "assistant", "function"]): The role of the message.

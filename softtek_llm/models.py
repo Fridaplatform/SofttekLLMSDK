@@ -1,3 +1,8 @@
+"""
+# Models
+This module contains the `LLMModel` abstract base class and its implementations. These classes are used to create language models that can be used by chatbots to generate responses.
+"""
+
 from abc import ABC, abstractmethod
 from time import perf_counter_ns
 from typing import Any, Dict, List, Literal
@@ -16,13 +21,14 @@ from softtek_llm.utils import setup_azure
 class LLMModel(ABC):
     """
     # LLM Model
-    Creates an abstract base class for a language model. Used as a base class for implementing different types of language models. Provides intialization with options like max_tokens, temperature and name. Also defines a call method that must be implemented.
+    Creates an abstract base class for a language model. Used as a base class for implementing different types of language models. Also defines a call method that must be implemented.
 
-    ## Parameters
+    ## Attributes
     - `name`: Name of the model
 
     ## Methods
     - `__call__`: Method to generate text from the model. Must be implemented by the child class.
+    - `parse_filters`: Generates a prompt message to check if a given prompt follows a set of filtering rules. Must be implemented by the child class.
     """
 
     def __init__(
@@ -43,7 +49,7 @@ class LLMModel(ABC):
 
     @property
     def model_name(self) -> str:
-        """Tthe name of the model."""
+        """The name of the model."""
         return self.__model_name
 
     @property
@@ -73,10 +79,13 @@ class LLMModel(ABC):
     @abstractmethod
     def parse_filters(self, prompt: str) -> List[Message]:
         """
-        Generates a prompt message to check if a given prompt follows a set of filtering rules.
+        Generates a prompt message to check if a given prompt follows a set of filtering rules. It must be overridden in a subclass.
 
         Args:
             `prompt` (str): a string representing the prompt that will be checked against rules
+
+        Returns:
+            List[Message]: a list of messages to be used by the chatbot to check if the prompt respects the rules
 
         Raises:
          - NotImplementedError: When this abstract method is called without being implemented in a subclass.
@@ -118,7 +127,7 @@ class OpenAI(LLMModel):
 
         Args:
             `api_key` (str): OpenAI API key.
-            `model_name` (str): Name of the model. If you're using an OpenAI resource/key, use the correspondent model name (e.g. gpt-35-turbo-16k), if you're using Azure OpenAI or other hosting service, use your deployment name.
+            `model_name` (str): Name of the model. If you're using an OpenAI resource/key, use the correspondent model name (e.g. `gpt-35-turbo-16k`), if you're using Azure OpenAI or other hosting service, use your deployment name.
             `api_type` (Literal["azure"] | None, optional): Type of API to use. Defaults to None.
             `api_base` (str | None, optional): Base URL for Azure API. Defaults to None.
             `api_version` (str, optional): API version for Azure API. Defaults to "2023-07-01-preview".
@@ -129,7 +138,7 @@ class OpenAI(LLMModel):
             `verbose` (bool, optional): Whether to print debug messages. Defaults to False.
 
         Raises:
-            ValueError: When api_type is not "azure" or None.
+            ValueError: When `api_type` is not "azure" or None.
         """
         super().__init__(model_name, verbose=verbose)
         self.max_tokens = max_tokens
@@ -228,6 +237,9 @@ class OpenAI(LLMModel):
 
         Returns:
             `resp` (Response): A Response object containing the model's reply, timestamp, latency, and model name.
+
+        Raises:
+            `TokensExceeded`: When the model exceeds the maximum number of tokens allowed.
         """
 
         start = perf_counter_ns()
@@ -513,7 +525,7 @@ class SofttekOpenAI(LLMModel):
 
     @property
     def api_key(self) -> str:
-        """The OpenAI API key."""
+        """The LLMOPs API key."""
         return self.__api_key
 
     @override
@@ -529,12 +541,12 @@ class SofttekOpenAI(LLMModel):
         Args:
             `memory` (Memory): An instance of the Memory class that holds previous conversation messages.
 
-            `description` (str, optional): A description of the conversation. Defaults to "You are a bot.".
+            `description` (str, optional): A description of the bot. Defaults to "You are a bot.".
 
             `logging_kwargs` (Dict, optional): A dictionary containing the parameters to be logged. Defaults to {}.
 
         Raises:
-            `Exception`: If the API request to the OpenAI Chat API returns a status code other than 200.
+            `Exception`: If the API request to the Softtek OpenAI Chat API returns a status code other than 200.
 
         Returns:
             `Response`: An instance of the Response class that contains the generated response.
