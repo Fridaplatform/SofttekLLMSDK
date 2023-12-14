@@ -1,3 +1,8 @@
+"""
+# Cache
+Represents the cache of the assistant. Stores all the prompts and responses that have been exchanged between the user and the assistant.
+"""
+
 from datetime import datetime
 from time import perf_counter_ns
 from typing import Dict, Tuple
@@ -60,7 +65,7 @@ class Cache:
         """This function adds a prompt and response to the cache. It calculates the embeddings for the prompt and adds it to the vector store.
 
         Args:
-            `prompt` (str): A string prompt to which the function will respond to.
+            `prompt` (str): The prompt that was sent to the assistant.
             `response` (Response): A Response object containing the model's reply, timestamp, latency, and model name.
         """
         metadata = response.additional_kwargs.copy()
@@ -88,7 +93,7 @@ class Cache:
         """This function retrieves the best response from a query using the prompt provided by the user. It calculates the time taken to retrieve the data and returns the response.
 
         Args:
-            `prompt` (str): A string prompt to which the function will respond to.
+            `prompt` (str):  The prompt that was sent to the assistant.
             `threshold` (float, optional): The threshold to use for the search. Defaults to 0.9.
             `additional_kwargs` (Dict, optional): Optional dictionary of additional keyword arguments to add to the retrieved response. Defaults to {}.
 
@@ -105,7 +110,7 @@ class Cache:
 
         if len(matches) == 0:
             return None, 0.0
-        
+
         best_match = matches[0]
         score = best_match.metadata.pop("score")
         if score < threshold:

@@ -9,6 +9,7 @@
   - [Embeddings](embeddings.md)
   - [Memory](memory.md)
   - [Vector Stores](vectorStores.md)
+  - [Cache](cache.md)
 
 ## Overview
 
@@ -27,3 +28,4 @@ It has an assortment of classes that will help you implement functionality such 
 - [Embeddings](embeddings.md)
 - [Memory](memory.md)
 - [Vector Stores](vectorStores.md)
+- [Cache](cache.md)
