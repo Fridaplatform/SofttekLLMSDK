@@ -10,6 +10,9 @@
   - [Memory](memory.md)
   - [Vector Stores](vectorStores.md)
   - [Cache](cache.md)
+  - [Chatbots](chatbots/README.md)
+    - [Chatbot](chatbots/chatbot.md)
+    - [Document Chatbot](chatbots/documentChatbot.md)
 
 ## Overview
 
@@ -29,3 +32,6 @@ It has an assortment of classes that will help you implement functionality such 
 - [Memory](memory.md)
 - [Vector Stores](vectorStores.md)
 - [Cache](cache.md)
+- [Chatbots](chatbots/README.md)
+  - [Chatbot](chatbots/chatbot.md)
+  - [Document Chatbot](chatbots/documentChatbot.md)

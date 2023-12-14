@@ -237,6 +237,9 @@ class OpenAI(LLMModel):
 
         Returns:
             `resp` (Response): A Response object containing the model's reply, timestamp, latency, and model name.
+
+        Raises:
+            `TokensExceeded`: When the model exceeds the maximum number of tokens allowed.
         """
 
         start = perf_counter_ns()

@@ -1,3 +1,8 @@
+"""
+# Document Chatbot
+A chatbot that uses a knowledge base to answer questions. The knowledge base is a vector store that contains the documents. The embeddings model is used to embed the documents and the prompt. The model is used to generate the response.
+"""
+
 import os
 import tempfile
 import uuid
@@ -28,7 +33,7 @@ from softtek_llm.vectorStores import VectorStore
 class DocumentChatBot(Chatbot):
     """
     # Document Chatbot
-    A chatbot that uses a knowledge base to answer questions. The knowledge base is a vector store that contains the documents. The embeddings model is used to embed the documents and the prompt. The model is used to generate the response.
+    A chatbot that uses a knowledge base to answer questions. The knowledge base is a vector store that contains the documents. The embeddings model is used to embed the documents and the prompt. The model is used to generate the response. Inherits from `Chatbot`.
 
     ## Attributes
     - `knowledge_base` (VectorStore): The vector store that contains the documents.
@@ -72,7 +77,7 @@ class DocumentChatBot(Chatbot):
             `embeddings_model` (EmbeddingsModel): The embeddings model to use for embedding the documents and the prompt.
             `description` (str, optional): Information about the bot. Defaults to "You are a helpful research assistant. You have acess to documents and always respond using the most relevant information.".
             `memory` (Memory, optional): The memory to use. Defaults to WindowMemory(window_size=10).
-            `non_valid_response` (str | None, optional): Response given when the prompt does not follow the rules set by the filters. Defaults to None.
+            `non_valid_response` (str | None, optional): Response given when the prompt does not follow the rules set by the filters. Defaults to None. If `None`, an `InvalidPrompt` exception is raised when the prompt does not follow the rules set by the `filters`.
             `filters` (List[Filter] | None, optional): List of filters used by the chatbot. Defaults to None.
             `cache` (Cache | None, optional): Cache used by the chatbot. Defaults to None.
             `cache_probability` (float, optional): Probability of using the cache. Defaults to 0.5. If 1.0, the cache is always used. If 0.0, the cache is never used.
@@ -338,6 +343,7 @@ class DocumentChatBot(Chatbot):
             `include_context` (bool, optional): Whether to include the context in the response. Defaults to False.
             `top_documents` (int, optional): The number of documents to consider. Defaults to 5.
             `cache_kwargs` (Dict, optional): Additional keyword arguments to be passed to the cache. Defaults to {}.
+            `logging_kwargs` (`Dict`, optional): additional keyword arguments to be passed to the logging function. **Can only be used with certain models**. Defaults to `None`.
 
         Raises:
             `InvalidPrompt`: If the prompt does not follow the rules set by the filters and `non_valid_response` is None.

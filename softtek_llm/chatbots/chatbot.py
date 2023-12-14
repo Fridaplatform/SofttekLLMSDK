@@ -1,3 +1,8 @@
+"""
+# Chatbot
+The Chatbot class is the main class of the library. It is used to initialize a chatbot instance, which can then be used to chat with an LLM.
+"""
+
 import random
 from datetime import datetime
 from time import perf_counter_ns
