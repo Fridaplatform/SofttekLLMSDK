@@ -13,6 +13,7 @@
   - [Chatbots](chatbots/README.md)
     - [Chatbot](chatbots/chatbot.md)
     - [Document Chatbot](chatbots/documentChatbot.md)
+  - [Exceptions](exceptions.md)
 
 ## Overview
 
@@ -35,3 +36,4 @@ It has an assortment of classes that will help you implement functionality such 
 - [Chatbots](chatbots/README.md)
   - [Chatbot](chatbots/chatbot.md)
   - [Document Chatbot](chatbots/documentChatbot.md)
+- [Exceptions](exceptions.md)
