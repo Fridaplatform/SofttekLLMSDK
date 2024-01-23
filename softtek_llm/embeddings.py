@@ -145,7 +145,7 @@ class SofttekOpenAIEmbeddings(EmbeddingsModel):
         return self.__model_name
 
     @override
-    def embed(self, prompt: str, additional_kwargs: Dict = {}) -> List[float]:
+    def embed(self, prompt: str, additional_kwargs: Dict = {}, **kwargs) -> List[float]:
         """Embeds a prompt into a list of floats.
 
         Args:

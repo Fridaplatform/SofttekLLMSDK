@@ -116,7 +116,8 @@ Creates a Softtek OpenAI embeddings model. This class is a subclass of the [`Emb
 ```python
 embed(
   prompt: str,
-  additional_kwargs: Dict = {}
+  additional_kwargs: Dict = {},
+  **kwargs
 ) -> List[float]
 ```
 
