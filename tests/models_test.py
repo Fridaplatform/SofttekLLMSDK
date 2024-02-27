@@ -1,7 +1,6 @@
 import os
 import unittest
-
-from openai.error import InvalidRequestError
+import openai
 
 from softtek_llm.memory import Memory
 from softtek_llm.models import OpenAI, SofttekOpenAI
@@ -150,7 +149,7 @@ class TestOpenAI(unittest.TestCase):
             model_name=self.model_name,
         )
 
-        with self.assertRaises(InvalidRequestError):
+        with self.assertRaises(openai.BadRequestError):
             chat_model(memory, description="You are a chatbot.")
 
 

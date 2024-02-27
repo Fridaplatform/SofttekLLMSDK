@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Literal
 
 import openai
 import requests
-from openai.error import InvalidRequestError
 from typing_extensions import override
 
 from softtek_llm.exceptions import TokensExceeded
@@ -260,7 +259,7 @@ class OpenAI(LLMModel):
                     frequency_penalty=self.frequency_penalty,
                 )
             )
-        except InvalidRequestError as e:
+        except openai.BadRequestError as e:
             if "maximum context length" in str(e).lower():
                 raise TokensExceeded(
                     f"Tokens exceeded for model '{self.model_name}'. If you're using the max_tokens parameter, try increasing it. Otherwise, you may consider:\n- Upgrading to a different model\n- Reducing the messages stored in memory (for example, by using a WindowMemory)\n- Applying some strategy for data reduction (for example, text summarization)"
