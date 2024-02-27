@@ -7,8 +7,8 @@ from abc import ABC, abstractmethod
 from time import perf_counter_ns
 from typing import Any, Dict, List, Literal
 
-import openai
 import requests
+import openai
 from typing_extensions import override
 
 from softtek_llm.exceptions import TokensExceeded
@@ -144,12 +144,11 @@ class OpenAI(LLMModel):
         self.temperature = temperature
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
-        openai.api_key = api_key
+        self.__client = openai.OpenAI(api_key=api_key, base_url=api_base)
         if api_type is not None:
-            openai.api_type = api_type
             match api_type:
                 case "azure":
-                    setup_azure(api_base, api_version)
+                    self.__client = setup_azure(api_key=api_key, api_base=api_base, api_version=api_version)
                 case _:
                     raise ValueError(
                         f"api_type must be either 'azure' or None, not {api_type}"
@@ -250,14 +249,14 @@ class OpenAI(LLMModel):
 
         try:
             answer = OpenAIChatResponse(
-                **openai.ChatCompletion.create(
-                    deployment_id=self.model_name,
+                **self.__client.chat.completions.create(
+                    model=self.model_name,
                     messages=messages,
                     temperature=self.temperature,
                     max_tokens=self.max_tokens,
                     presence_penalty=self.presence_penalty,
                     frequency_penalty=self.frequency_penalty,
-                )
+                ).model_dump()
             )
         except openai.BadRequestError as e:
             if "maximum context length" in str(e).lower():

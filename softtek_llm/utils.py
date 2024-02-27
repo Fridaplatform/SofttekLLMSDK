@@ -13,6 +13,9 @@ def setup_azure(api_key: str | None, api_base: str | None, api_version: str):
     Raises:
         ValueError: When api_key is None.
         ValueError: When api_base is None.
+    
+    Returns:
+        AzureOpenAI: AzureOpenAI object.
 
     """
 

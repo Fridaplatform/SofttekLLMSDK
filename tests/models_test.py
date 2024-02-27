@@ -149,8 +149,24 @@ class TestOpenAI(unittest.TestCase):
             model_name=self.model_name,
         )
 
-        with self.assertRaises(openai.BadRequestError):
+        with self.assertRaises(openai.AuthenticationError):
             chat_model(memory, description="You are a chatbot.")
+    
+    def test_azure_low_tokens(self):
+        api_type = "azure"
+        memory = Memory()
+        memory.add_message("user", "Hello!")
+
+        chat_model = OpenAI(
+            api_key=self.api_key,
+            model_name=self.model_name,
+            api_type=api_type,
+            api_base=self.api_base,
+            max_tokens=1,
+        )
+
+        response = chat_model(memory, description="You are a chatbot.")
+        self.assertIsInstance(response, Response)
 
 
 class TestSofttekOpenAI(unittest.TestCase):
