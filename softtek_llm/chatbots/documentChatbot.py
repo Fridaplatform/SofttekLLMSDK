@@ -124,13 +124,17 @@ class DocumentChatBot(Chatbot):
         self.__knowledge_base_namespace = knowledge_base_namespace
 
     def __get_document_name_and_file_path(
-        self, file: str | bytes, file_type: Literal["pdf", "doc", "docx", "txt"]
+        self,
+        file: str | bytes,
+        file_type: Literal["pdf", "doc", "docx", "txt"],
+        document_name: str | None,
     ) -> Tuple[str, str]:
         """Extracts the document name and the file path from the file.
 
         Args:
             `file` (str | bytes): Either the path to the file or the bytes of the file.
             `file_type` (Literal["pdf", "doc", "docx", "txt"]): The type of the file.
+            `document_name` (str | None): The name of the document. If None, the name of the file is used.
 
         Raises:
             `ValueError`: If unsupported file_type is provided.
@@ -227,7 +231,7 @@ class DocumentChatBot(Chatbot):
             `document_name` (str | None, optional): The name of the document. Defaults to None. If None, the name of the file is used.
         """
         document_name, file_path = self.__get_document_name_and_file_path(
-            file, file_type
+            file, file_type, document_name
         )
         vectors = self.__get_vectors(file_type, file_path, document_name)
         self.knowledge_base.add(vectors, namespace=self.knowledge_base_namespace)
