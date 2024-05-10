@@ -312,10 +312,10 @@ class DocumentChatBot(Chatbot):
 
         # * Call model
         response = (
-            self.model(self.memory, description=self.description)
+            self.model(memory, description=self.description)
             if logging_kwargs is None
             else self.model(
-                self.memory, description=self.description, logging_kwargs=logging_kwargs
+                memory, description=self.description, logging_kwargs=logging_kwargs
             )
         )
 
